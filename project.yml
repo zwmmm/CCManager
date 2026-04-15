@@ -1,0 +1,45 @@
+name: CCManager
+options:
+  bundleIdPrefix: com.ccmanager
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    PRODUCT_NAME: CCManager
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    ENABLE_HARDENED_RUNTIME: YES
+
+packages:
+  SQLite:
+    url: https://github.com/stephencelis/SQLite.swift.git
+    from: "0.15.0"
+
+targets:
+  CCManager:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+      - path: Resources/MingcuteClaudeFill.png
+        buildPhase: resources
+      - Resources/Assets.xcassets
+    resources:
+      - Resources/Info.plist
+      - Resources/CCManager.entitlements
+    settings:
+      base:
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Resources/CCManager.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - package: SQLite
+        product: SQLite
