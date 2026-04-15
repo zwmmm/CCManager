@@ -36,7 +36,8 @@ final class StatusBarController: ObservableObject {
 
     private func setupPanel() {
         let contentView = StatusBarMenuView(
-            onSelectProvider: { [weak self] provider in
+            onSelectProvider: { provider in
+                try? ConfigWriter.shared.writeProviderToConfig(provider)
                 ProviderStore.shared.setActiveProvider(provider)
             },
             onOpenMainWindow: { [weak self] in
@@ -131,6 +132,8 @@ struct StatusBarMenuView: View {
     let onOpenMainWindow: () -> Void
     let onQuit: () -> Void
 
+    @State private var pressedProviderId: UUID?
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -156,34 +159,50 @@ struct StatusBarMenuView: View {
 
             // Provider List
             ScrollView {
-                LazyVStack(spacing: 0) {
+                VStack(spacing: 0) {
+                    Spacer().frame(width: 280, height: 0)
+
                     // Claude Code Section
                     if !claudeProviders.isEmpty {
-                        Section {
-                            ForEach(claudeProviders) { provider in
-                                ProviderMenuRow(
-                                    provider: provider,
-                                    isActive: provider.isActive,
-                                    onSelect: { onSelectProvider(provider) }
-                                )
-                            }
-                        } header: {
-                            SectionHeader(title: "Claude Code")
+                        SectionHeader(title: "Claude Code")
+                        ForEach(claudeProviders) { provider in
+                            ProviderMenuRowView(
+                                provider: provider,
+                                isActive: provider.isActive,
+                                isPressed: pressedProviderId == provider.id,
+                                onTap: {
+                                    withAnimation(.easeOut(duration: 0.12)) {
+                                        pressedProviderId = provider.id
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                                        pressedProviderId = nil
+                                        onSelectProvider(provider)
+                                    }
+                                }
+                            )
+                            .frame(maxWidth: .infinity)
                         }
                     }
 
                     // Codex Section
                     if !codexProviders.isEmpty {
-                        Section {
-                            ForEach(codexProviders) { provider in
-                                ProviderMenuRow(
-                                    provider: provider,
-                                    isActive: provider.isActive,
-                                    onSelect: { onSelectProvider(provider) }
-                                )
-                            }
-                        } header: {
-                            SectionHeader(title: "Codex")
+                        SectionHeader(title: "Codex")
+                        ForEach(codexProviders) { provider in
+                            ProviderMenuRowView(
+                                provider: provider,
+                                isActive: provider.isActive,
+                                isPressed: pressedProviderId == provider.id,
+                                onTap: {
+                                    withAnimation(.easeOut(duration: 0.12)) {
+                                        pressedProviderId = provider.id
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                                        pressedProviderId = nil
+                                        onSelectProvider(provider)
+                                    }
+                                }
+                            )
+                            .frame(maxWidth: .infinity)
                         }
                     }
 
@@ -258,54 +277,56 @@ struct StatusBarMenuView: View {
 
 // MARK: - Provider Row
 
-struct ProviderMenuRow: View {
+struct ProviderMenuRowView: View {
     let provider: Provider
     let isActive: Bool
-    let onSelect: () -> Void
+    let isPressed: Bool
+    let onTap: () -> Void
 
     @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
-        Button {
-            onSelect()
-        } label: {
-            HStack(spacing: 12) {
-                // Pixel Avatar (already circular)
-                CachedPixelAvatarView(
-                    name: provider.name,
-                    type: provider.type,
-                    size: 28
-                )
+        HStack(spacing: 12) {
+            CachedPixelAvatarView(
+                name: provider.name,
+                type: provider.type,
+                size: 24
+            )
 
-                // Info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(provider.name)
-                        .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(provider.name)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                if let model = provider.model, !model.isEmpty {
+                    Text(model)
+                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
-
-                    if let model = provider.model, !model.isEmpty {
-                        Text(model)
-                            .font(.system(size: 10, weight: .regular, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-
-                // Active indicator
-                if isActive {
-                    Circle()
-                        .fill(themeManager.brandColor)
-                        .frame(width: 8, height: 8)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(isActive ? themeManager.brandColor.opacity(0.1) : Color.clear)
+
+            Spacer()
+
+            if isActive {
+                Circle()
+                    .fill(themeManager.brandColor)
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(isPressed ? 1.5 : 1.0)
+                    .animation(.easeOut(duration: 0.12), value: isPressed)
+            }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isActive ? themeManager.brandColor.opacity(0.1) : Color.clear)
+        .contentShape(Rectangle())
+        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .animation(.easeOut(duration: 0.12), value: isPressed)
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
