@@ -63,7 +63,7 @@ xcodegen generate
 git log v1.0.1..HEAD --oneline
 ```
 
-分析所有提交，**用英文总结每类变更的核心内容**，而非简单罗列 commit message。
+分析所有提交，**用英文总结每类变更的核心内容并去掉与产品本身无关的提交，比如 CI,docs 等**，而非简单罗列 commit message。
 
 ```
 ## [New Version] - YYYY-MM-DD
