@@ -71,8 +71,10 @@ git log v1.0.1..HEAD --oneline
 ### Features
 - [English summary of feature changes]
 
+
 ### Bug Fixes
 - [English summary of bug fixes]
+
 
 ### Others
 - [English summary of chore/docs/refactor changes]
