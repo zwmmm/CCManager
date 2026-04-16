@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Sparkle
 import Combine
 
@@ -21,12 +21,13 @@ final class UpdateUserDriver: NSObject, SPUUserDriver {
     }
 
     func showUpdateFound(with appcastItem: SUAppcastItem, state: SPUUserUpdateState, reply: @escaping @Sendable (SPUUserUpdateChoice) -> Void) {
-        // 显示自定义弹窗
         updateWindowController = UpdateWindowController(
             appcastItem: appcastItem,
             onInstall: { [weak self] in
                 reply(.install)
-                self?.closeWindowController()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self?.closeWindowController()
+                }
             },
             onSkip: { [weak self] in
                 reply(.skip)
@@ -74,6 +75,7 @@ final class UpdateUserDriver: NSObject, SPUUserDriver {
     }
 
     func showDownloadDidStartExtractingUpdate() {
+        closeWindowController()
         standardDriver.showDownloadDidStartExtractingUpdate()
     }
 
@@ -82,11 +84,21 @@ final class UpdateUserDriver: NSObject, SPUUserDriver {
     }
 
     func showReady(toInstallAndRelaunch reply: @escaping @Sendable (SPUUserUpdateChoice) -> Void) {
+        NSApp.activate(ignoringOtherApps: true)
         standardDriver.showReady(toInstallAndRelaunch: reply)
     }
 
     func showInstallingUpdate(withApplicationTerminated applicationTerminated: Bool, retryTerminatingApplication: @escaping () -> Void) {
-        standardDriver.showInstallingUpdate(withApplicationTerminated: applicationTerminated, retryTerminatingApplication: retryTerminatingApplication)
+        if !applicationTerminated {
+            NSApp.stopModal()
+            for window in NSApp.windows {
+                window.close()
+            }
+            retryTerminatingApplication()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                exit(0)
+            }
+        }
     }
 
     func showUpdateInstalledAndRelaunched(_ relaunched: Bool, acknowledgement: @escaping () -> Void) {
@@ -104,7 +116,7 @@ final class UpdateUserDriver: NSObject, SPUUserDriver {
 
 /// 管理应用自动更新的单例类
 /// 封装 Sparkle 的 SPUUpdater，提供 SwiftUI 友好的接口
-final class UpdateManager: NSObject, ObservableObject {
+final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     // MARK: - Singleton
 
@@ -123,7 +135,7 @@ final class UpdateManager: NSObject, ObservableObject {
 
     // MARK: - Private Properties
 
-    private let updater: SPUUpdater
+    private var updater: SPUUpdater!
     private let userDriver: UpdateUserDriver
     private var cancellables = Set<AnyCancellable>()
     private let lastInstalledVersionKey = "CCManager.LastInstalledVersion"
@@ -158,15 +170,15 @@ final class UpdateManager: NSObject, ObservableObject {
         // 初始化自定义 UserDriver
         self.userDriver = UpdateUserDriver()
 
+        super.init()
+
         // 直接创建 SPUUpdater，手动传入自定义 userDriver
         self.updater = SPUUpdater(
             hostBundle: .main,
             applicationBundle: .main,
             userDriver: userDriver,
-            delegate: nil
+            delegate: self
         )
-
-        super.init()
 
         setupBindings()
 
@@ -182,6 +194,14 @@ final class UpdateManager: NSObject, ObservableObject {
     }
 
     // MARK: - Private Methods
+
+    // MARK: - SPUUpdaterDelegate
+
+    func updaterWillRelaunchAfterInstalling(_ updater: SPUUpdater) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApp.terminate(nil)
+        }
+    }
 
     private func setupBindings() {
         // 使用 KVO 绑定 canCheckForUpdates 属性

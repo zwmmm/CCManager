@@ -27,6 +27,7 @@ final class UpdateWindowController: NSWindowController {
             onSkip: onSkip,
             onDismiss: onDismiss
         )
+        .environmentObject(ThemeManager.shared)
 
         let hostingView = NSHostingView(rootView: contentView)
 
@@ -39,6 +40,7 @@ final class UpdateWindowController: NSWindowController {
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.title = "Update Available"
+        window.appearance = NSApp.appearance
         window.center()
 
         super.init(window: window)
