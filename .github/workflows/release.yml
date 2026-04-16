@@ -91,7 +91,6 @@ jobs:
           # Insert description tag into appcast.xml <item>
           sed -i '' 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\
     </item>|' docs/appcast.xml
-          echo "Injected release notes into appcast.xml"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
