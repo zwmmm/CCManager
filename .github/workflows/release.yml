@@ -61,61 +61,13 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
           rm -rf dmg_temp
 
-      - name: Extract Release Notes
-        env:
-          TAG_VERSION: ${{ github.ref_name }}
+      - name: Extract Release Notes from Appcast
         run: |
-          # Remove 'v' prefix for matching
-          TAG_VERSION_CLEAN=${TAG_VERSION#v}
-
-          # Extract section for this version from CHANGELOG.md
-          # Look for section starting with "## [version]" until next "## ["
-          if [ -f "CHANGELOG.md" ]; then
-            # Use awk to extract section between VERSION and next ## heading
-            awk -v ver="$TAG_VERSION_CLEAN" '
-              /^## \[/ { in_section = 0 }
-              $0 ~ "## [" ver "]" { in_section = 1; next }
-              in_section { print }
-            ' CHANGELOG.md > build/Build/Products/Release/CCManager.app.md
-            echo "Extracted release notes for $TAG_VERSION_CLEAN"
-          else
-            echo "CHANGELOG.md not found, creating empty release notes"
-            echo "Version $TAG_VERSION_CLEAN" > build/Build/Products/Release/CCManager.app.md
-          fi
-
-      - name: Download Sparkle Tools
-        run: |
-          SPARKLE_VERSION="2.6.0"
-          curl -L -o sparkle.tar.xz \
-            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
-          tar -xf sparkle.tar.xz
-
-      - name: Generate Appcast
-        env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-          TAG_VERSION: ${{ github.ref_name }}
-        run: |
-          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
-            echo "Error: SPARKLE_PRIVATE_KEY secret is not set"
-            exit 1
-          fi
-          echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
-            --ed-key-file - \
-            --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/${{ github.ref_name }}/" \
-            -o docs/appcast.xml \
-            build/Build/Products/Release/
-
-          # Inject release notes into appcast.xml <item> as <description>
-          # Find the <item> block and insert <description> after <language>en</language>
-          if [ -f "build/Build/Products/Release/CCManager.app.md" ]; then
-            RELEASE_NOTES=$(cat build/Build/Products/Release/CCManager.app.md)
-            # Escape special characters for XML
-            RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-            # Insert description tag into the latest <item> in appcast.xml
-            # Find the first </item> and insert before it
-            sed -i "s|</item>|  <description><![CDATA[${RELEASE_NOTES}]]></description>\n    </item>|" docs/appcast.xml
-            echo "Injected release notes into appcast.xml"
-          fi
+          # Extract <description> content from docs/appcast.xml
+          # Supports both CDATA and plain text description tags
+          DESCRIPTION=$(sed -n 's/.*<description>\(<!\[CDATA\[\(.*\)\]\]>\|[^<]*\)<\/description>.*/\2/p' docs/appcast.xml | tr -d '\n')
+          echo "$DESCRIPTION" > release-body.md
+          echo "Extracted release notes (${#DESCRIPTION} chars)"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -123,7 +75,6 @@ jobs:
           files: |
             CCManager-${{ github.ref_name }}.dmg
             build/Build/Products/Release/CCManager-${{ github.ref_name }}.zip
-            docs/appcast.xml
-          body_path: CHANGELOG.md
+          body_path: release-body.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
