@@ -270,6 +270,7 @@ struct ProviderDetailView: View {
     let onEdit: (Provider) -> Void
 
     @State private var isAppearing = false
+    @State private var showSuccessToast = false
 
     var body: some View {
         ScrollView {
@@ -351,6 +352,7 @@ struct ProviderDetailView: View {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             providerStore.setActiveProvider(provider)
                         }
+                        showSuccessToast = true
                     } label: {
                         Label("Apply Config", systemImage: "arrow.up.doc")
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
@@ -365,6 +367,7 @@ struct ProviderDetailView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
+        .toast(isPresented: $showSuccessToast, message: "Config Applied")
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(0.05)) {
                 isAppearing = true
