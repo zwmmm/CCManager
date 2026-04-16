@@ -84,13 +84,10 @@ jobs:
 
       - name: Inject Release Notes
         run: |
-          # Read release-notes.md content
-          RELEASE_NOTES=$(cat release-notes.md)
-          # Escape special characters for XML
-          RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-          # Insert description tag into appcast.xml <item>
-          sed -i '' 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\
-          </item>|' docs/appcast.xml
+          # Read release-notes.md and escape for XML, preserving newlines
+          RELEASE_NOTES=$(awk '{gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); printf "%s\\n", $0}' release-notes.md | sed 's/\\n$//')
+          # Use perl to handle multiline replacement in appcast.xml
+          perl -0777 -i -pe 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\n</item>|' docs/appcast.xml
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
