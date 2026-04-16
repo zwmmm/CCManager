@@ -9,19 +9,22 @@ permissions:
   contents: write
 
 env:
-  XCODE_VERSION: 'stable'
+  XCODE_VERSION: '26.4'
   SCHEME: 'CCManager'
   PROJECT: 'CCManager.xcodeproj'
 
 jobs:
   build-and-release:
-    runs-on: macos-latest
+    runs-on: macos-26
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: List Xcodes
+        run: ls /Applications | grep Xcode
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
