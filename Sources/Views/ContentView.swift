@@ -330,6 +330,26 @@ struct ProviderDetailView: View {
                             Divider()
                             configRow(labels.model, model)
                         }
+
+                        // Show advanced models for Claude Code
+                        if provider.type == .claudeCode {
+                            if let thinkingModel = provider.thinkingModel, !thinkingModel.isEmpty {
+                                Divider()
+                                configRow("ANTHROPIC_SMALL_FAST_MODEL", thinkingModel)
+                            }
+                            if let haikuModel = provider.haikuModel, !haikuModel.isEmpty {
+                                Divider()
+                                configRow("ANTHROPIC_DEFAULT_HAIKU_MODEL", haikuModel)
+                            }
+                            if let sonnetModel = provider.sonnetModel, !sonnetModel.isEmpty {
+                                Divider()
+                                configRow("ANTHROPIC_DEFAULT_SONNET_MODEL", sonnetModel)
+                            }
+                            if let opusModel = provider.opusModel, !opusModel.isEmpty {
+                                Divider()
+                                configRow("ANTHROPIC_DEFAULT_OPUS_MODEL", opusModel)
+                            }
+                        }
                     }
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 10))

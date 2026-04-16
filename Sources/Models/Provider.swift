@@ -14,16 +14,37 @@ struct Provider: Identifiable, Equatable, Codable {
     var apiKey: String
     var baseUrl: String
     var model: String?
+    var thinkingModel: String?
+    var haikuModel: String?
+    var sonnetModel: String?
+    var opusModel: String?
     var isActive: Bool
     var sortOrder: Int
 
-    init(id: UUID = UUID(), name: String, type: ProviderType, apiKey: String, baseUrl: String, model: String? = nil, isActive: Bool = false, sortOrder: Int = 0) {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        type: ProviderType,
+        apiKey: String,
+        baseUrl: String,
+        model: String? = nil,
+        thinkingModel: String? = nil,
+        haikuModel: String? = nil,
+        sonnetModel: String? = nil,
+        opusModel: String? = nil,
+        isActive: Bool = false,
+        sortOrder: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.type = type
         self.apiKey = apiKey
         self.baseUrl = baseUrl
         self.model = model
+        self.thinkingModel = thinkingModel
+        self.haikuModel = haikuModel
+        self.sonnetModel = sonnetModel
+        self.opusModel = opusModel
         self.isActive = isActive
         self.sortOrder = sortOrder
     }

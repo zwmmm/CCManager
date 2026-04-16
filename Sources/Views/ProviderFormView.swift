@@ -24,6 +24,11 @@ struct ProviderFormView: View {
     @State private var apiKey: String = ""
     @State private var baseUrl: String = ""
     @State private var model: String = ""
+    @State private var thinkingModel: String = ""
+    @State private var haikuModel: String = ""
+    @State private var sonnetModel: String = ""
+    @State private var opusModel: String = ""
+    @State private var showAdvancedModels: Bool = false
     @State private var isTesting: Bool = false
     @State private var testMessage: String?
     @State private var testSuccess: Bool = false
@@ -98,37 +103,57 @@ struct ProviderFormView: View {
                 Rectangle().fill(Color(nsColor: .separatorColor)).frame(height: 0.5)
             }
 
-            VStack(spacing: 14) {
-                fieldGroup("NAME", text: $name, placeholder: "My Provider")
-                fieldGroup("API KEY", text: $apiKey, placeholder: "sk-...", isSecure: true)
-                fieldGroup("BASE URL", text: $baseUrl, placeholder: baseUrlPlaceholder)
-                fieldGroup("MODEL (OPTIONAL)", text: $model, placeholder: modelPlaceholder)
-            }
-            .padding(18)
+            // Scrollable content
+            ScrollView {
+                VStack(spacing: 14) {
+                    fieldGroup("NAME", text: $name, placeholder: "My Provider")
+                    fieldGroup("API KEY", text: $apiKey, placeholder: "sk-...", isSecure: true)
+                    fieldGroup("BASE URL", text: $baseUrl, placeholder: baseUrlPlaceholder)
+                    fieldGroup("MODEL (OPTIONAL)", text: $model, placeholder: modelPlaceholder)
 
-            // Presets — filtered by current type
-            let filteredPresets = PresetProvider.presets.filter { $0.type == type }
-            if !filteredPresets.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(filteredPresets, id: \.name) { preset in
-                            Button {
-                                applyPreset(preset)
-                            } label: {
-                                Text(preset.name)
-                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 7)
-                                    .background(themeManager.brandColor.opacity(0.15))
-                                    .clipShape(Capsule())
-                                    .contentShape(Rectangle())
+                    // Advanced model settings (only for Claude Code)
+                    if type == .claudeCode {
+                        DisclosureGroup(isExpanded: $showAdvancedModels) {
+                            VStack(spacing: 12) {
+                                fieldGroup("THINKING MODEL", text: $thinkingModel, placeholder: "Uses main model if empty")
+                                fieldGroup("HAIKU MODEL", text: $haikuModel, placeholder: "Uses main model if empty")
+                                fieldGroup("SONNET MODEL", text: $sonnetModel, placeholder: "Uses main model if empty")
+                                fieldGroup("OPUS MODEL", text: $opusModel, placeholder: "Uses main model if empty")
                             }
-                            .buttonStyle(.plain)
+                            .padding(.top, 8)
+                        } label: {
+                            Text("ADVANCED MODEL SETTINGS")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 14)
+                .padding(18)
+
+                // Presets — filtered by current type
+                let filteredPresets = PresetProvider.presets.filter { $0.type == type }
+                if !filteredPresets.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(filteredPresets, id: \.name) { preset in
+                                Button {
+                                    applyPreset(preset)
+                                } label: {
+                                    Text(preset.name)
+                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 7)
+                                        .background(themeManager.brandColor.opacity(0.15))
+                                        .clipShape(Capsule())
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 14)
+                }
             }
 
             Divider()
@@ -176,7 +201,8 @@ struct ProviderFormView: View {
             }
             .padding(18)
         }
-        .frame(width: 380, height: 450)
+        .frame(width: 380)
+        .frame(maxHeight: 600)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             if case .edit(let provider) = mode {
@@ -185,6 +211,10 @@ struct ProviderFormView: View {
                 apiKey = provider.apiKey
                 baseUrl = provider.baseUrl
                 model = provider.model ?? ""
+                thinkingModel = provider.thinkingModel ?? ""
+                haikuModel = provider.haikuModel ?? ""
+                sonnetModel = provider.sonnetModel ?? ""
+                opusModel = provider.opusModel ?? ""
             }
         }
     }
@@ -225,6 +255,10 @@ struct ProviderFormView: View {
                 apiKey: apiKey.trimmingCharacters(in: .whitespaces),
                 baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
+                thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
+                haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
+                sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
+                opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces),
                 sortOrder: 0
             )
         case .edit(let existing):
@@ -235,6 +269,10 @@ struct ProviderFormView: View {
                 apiKey: apiKey.trimmingCharacters(in: .whitespaces),
                 baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
+                thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
+                haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
+                sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
+                opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces),
                 isActive: existing.isActive,
                 sortOrder: existing.sortOrder
             )
@@ -254,7 +292,11 @@ struct ProviderFormView: View {
             type: type,
             apiKey: apiKey.trimmingCharacters(in: .whitespaces),
             baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
-            model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces)
+            model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
+            thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
+            haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
+            sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
+            opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces)
         )
 
         let result = await ProviderTester.shared.test(provider: provider)

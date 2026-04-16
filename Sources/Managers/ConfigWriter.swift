@@ -36,7 +36,17 @@ final class ConfigWriter {
         var env = settings["env"] as? [String: Any] ?? [:]
         env["ANTHROPIC_AUTH_TOKEN"] = provider.apiKey
         env["ANTHROPIC_BASE_URL"] = provider.baseUrl
-        env["ANTHROPIC_MODEL"] = provider.model ?? PresetProvider.defaultClaudeModel
+
+        // 主模型
+        let mainModel = provider.model ?? PresetProvider.defaultClaudeModel
+        env["ANTHROPIC_MODEL"] = mainModel
+
+        // 其他模型 - 如果未设置则使用主模型
+        env["ANTHROPIC_SMALL_FAST_MODEL"] = provider.thinkingModel ?? mainModel
+        env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = provider.haikuModel ?? mainModel
+        env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = provider.sonnetModel ?? mainModel
+        env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = provider.opusModel ?? mainModel
+
         settings["env"] = env
 
         let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
