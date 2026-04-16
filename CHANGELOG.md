@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-04-16
+
+### Others
+
+- Release workflow improvements (no product changes)
+
 ## [1.1.1] - 2026-04-16
 
 ### Others

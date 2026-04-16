@@ -61,13 +61,36 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
           rm -rf dmg_temp
 
-      - name: Extract Release Notes from Appcast
+      - name: Download Sparkle Tools
         run: |
-          # Extract <description> content from docs/appcast.xml
-          # Supports both CDATA and plain text description tags
-          DESCRIPTION=$(sed -n 's/.*<description>\(<!\[CDATA\[\(.*\)\]\]>\|[^<]*\)<\/description>.*/\2/p' docs/appcast.xml | tr -d '\n')
-          echo "$DESCRIPTION" > release-body.md
-          echo "Extracted release notes (${#DESCRIPTION} chars)"
+          SPARKLE_VERSION="2.6.0"
+          curl -L -o sparkle.tar.xz \
+            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          tar -xf sparkle.tar.xz
+
+      - name: Generate Appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "Error: SPARKLE_PRIVATE_KEY secret is not set"
+            exit 1
+          fi
+          echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/${{ github.ref_name }}/" \
+            -o docs/appcast.xml \
+            build/Build/Products/Release/
+
+      - name: Inject Release Notes
+        run: |
+          # Read release-notes.md content
+          RELEASE_NOTES=$(cat release-notes.md)
+          # Escape special characters for XML
+          RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+          # Insert description tag into appcast.xml <item>
+          sed -i "s|</item>|  <description><![CDATA[${RELEASE_NOTES}]]></description>\\n    </item>|" docs/appcast.xml
+          echo "Injected release notes into appcast.xml"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -75,6 +98,7 @@ jobs:
           files: |
             CCManager-${{ github.ref_name }}.dmg
             build/Build/Products/Release/CCManager-${{ github.ref_name }}.zip
-          body_path: release-body.md
+            docs/appcast.xml
+          body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
