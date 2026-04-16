@@ -3,15 +3,23 @@ import SwiftUI
 
 extension Notification.Name {
     static let openSettings = Notification.Name("openSettings")
+    static let restoreMainWindow = Notification.Name("restoreMainWindow")
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var window: NSWindow?
+    private(set) var window: NSWindow?
     private var statusBarController: StatusBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMainMenu()
         statusBarController = StatusBarController()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRestoreMainWindow),
+            name: .restoreMainWindow,
+            object: nil
+        )
 
         let contentView = ContentView()
             .environmentObject(ProviderStore.shared)
@@ -25,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
 
+        window?.isReleasedWhenClosed = false
         window?.center()
         window?.setFrameAutosaveName("CCManagerMainWindow")
         window?.contentView = NSHostingView(rootView: contentView)
@@ -39,8 +48,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.post(name: .openSettings, object: nil)
     }
 
+    @objc private func handleRestoreMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = window {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            window?.makeKeyAndOrderFront(nil)
+        }
+        return true
     }
 
     // MARK: - Menu
@@ -61,12 +84,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let editMenu = NSMenu(title: "Edit")
         editMenuItem.submenu = editMenu
         editMenu.addItem(withTitle: "Undo",       action: #selector(UndoManager.undo),          keyEquivalent: "z")
-        editMenu.addItem(withTitle: "Redo",       action: Selector(("redo:")),                  keyEquivalent: "Z")
+        editMenu.addItem(withTitle: "Redo",       action: #selector(UndoManager.redo),        keyEquivalent: "Z")
         editMenu.addItem(.separator())
         editMenu.addItem(withTitle: "Cut",        action: #selector(NSText.cut(_:)),            keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Copy",       action: #selector(NSText.copy(_:)),           keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste",      action: #selector(NSText.paste(_:)),          keyEquivalent: "v")
-        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)),      keyEquivalent: "a")
+        editMenu.addItem(withTitle: "Copy",       action: #selector(NSText.copy(_:)),         keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste",      action: #selector(NSText.paste(_:)),        keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)),     keyEquivalent: "a")
 
         // Window menu with shortcuts
         let windowMenuItem = NSMenuItem()

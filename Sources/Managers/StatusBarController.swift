@@ -3,8 +3,8 @@ import SwiftUI
 
 final class StatusBarController: ObservableObject {
     private var statusItem: NSStatusItem?
-    private var panel: NSPanel?
-    private var clickMonitor: Any?
+    private var panel: StatusMenuPanel?
+    private var isPanelVisible = false
 
     init() {
         setupStatusItem()
@@ -35,90 +35,129 @@ final class StatusBarController: ObservableObject {
     }
 
     private func setupPanel() {
-        let contentView = StatusBarMenuView(
+        panel = StatusMenuPanel(
             onSelectProvider: { provider in
                 try? ConfigWriter.shared.writeProviderToConfig(provider)
                 ProviderStore.shared.setActiveProvider(provider)
             },
             onOpenMainWindow: { [weak self] in
-                self?.closePanel()
-                self?.openMainWindow()
+                self?.hidePanel()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NotificationCenter.default.post(name: .restoreMainWindow, object: nil)
+                }
             },
             onQuit: {
                 NSApp.terminate(nil)
+            },
+            onPanelHidden: { [weak self] in
+                self?.isPanelVisible = false
             }
         )
-        .environmentObject(ProviderStore.shared)
-        .environmentObject(ThemeManager.shared)
-
-        let hostingView = NSHostingView(rootView: contentView)
-
-        let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 280, height: 400),
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-        panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.hasShadow = true
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.contentView = hostingView
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-
-        self.panel = panel
     }
 
     @objc private func togglePanel() {
-        if let panel = panel, panel.isVisible {
-            closePanel()
+        if isPanelVisible {
+            hidePanel()
         } else {
             showPanel()
         }
     }
 
     private func showPanel() {
-        guard let panel = panel, let button = statusItem?.button else { return }
+        guard let button = statusItem?.button, let panel = panel else { return }
 
-        let buttonFrame = button.window?.convertToScreen(button.frame) ?? .zero
-        let panelSize = panel.frame.size
-
-        let xPos = buttonFrame.midX - (panelSize.width / 2)
-        let yPos = buttonFrame.minY - panelSize.height - 2
-
-        let screenFrame = NSScreen.main?.visibleFrame ?? .zero
-        let clampedX = max(screenFrame.minX, min(xPos, screenFrame.maxX - panelSize.width))
-
-        panel.setFrameOrigin(NSPoint(x: clampedX, y: yPos))
+        let buttonFrame = button.window?.convertToScreen(button.bounds)
+        panel.positionNear(buttonFrame: buttonFrame)
         panel.makeKeyAndOrderFront(nil)
-
-        if let existing = clickMonitor {
-            NSEvent.removeMonitor(existing)
-        }
-        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            guard let panel = self?.panel, panel.isVisible else { return }
-            let location = event.locationInWindow
-            let panelFrame = panel.frame
-            if !panelFrame.contains(location) {
-                self?.closePanel()
-            }
-        }
+        isPanelVisible = true
     }
 
-    private func closePanel() {
-        if let monitor = clickMonitor {
-            NSEvent.removeMonitor(monitor)
-            clickMonitor = nil
-        }
+    private func hidePanel() {
         panel?.orderOut(nil)
+        isPanelVisible = false
+    }
+}
+
+// MARK: - Custom Panel
+
+final class StatusMenuPanel: NSPanel {
+    private let onSelectProvider: (Provider) -> Void
+    private let onOpenMainWindow: () -> Void
+    private let onQuit: () -> Void
+    private let onPanelHidden: () -> Void
+
+    init(
+        onSelectProvider: @escaping (Provider) -> Void,
+        onOpenMainWindow: @escaping () -> Void,
+        onQuit: @escaping () -> Void,
+        onPanelHidden: @escaping () -> Void
+    ) {
+        self.onSelectProvider = onSelectProvider
+        self.onOpenMainWindow = onOpenMainWindow
+        self.onQuit = onQuit
+        self.onPanelHidden = onPanelHidden
+
+        super.init(
+            contentRect: NSRect(x: 0, y: 0, width: 280, height: 400),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+
+        setupPanel()
     }
 
-    @objc private func openMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.mainWindow {
-            window.makeKeyAndOrderFront(nil)
-        }
+    private func setupPanel() {
+        level = .statusBar
+        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+        isFloatingPanel = true
+        becomesKeyOnlyIfNeeded = true
+        acceptsMouseMovedEvents = true
+        hasShadow = true
+        backgroundColor = .clear
+
+        let menuView = StatusBarMenuView(
+            onSelectProvider: onSelectProvider,
+            onOpenMainWindow: onOpenMainWindow,
+            onQuit: onQuit
+        )
+        .environmentObject(ProviderStore.shared)
+        .environmentObject(ThemeManager.shared)
+        .environmentObject(EditorManager.shared)
+
+        let hostingView = NSHostingView(rootView: menuView)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 280, height: 400)
+
+        contentView = hostingView
+    }
+
+    func positionNear(buttonFrame: NSRect?) {
+        guard let buttonFrame = buttonFrame else { return }
+
+        let panelWidth: CGFloat = 280
+        let panelHeight: CGFloat = 400
+        let margin: CGFloat = 8
+
+        let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
+
+        var x = buttonFrame.origin.x + buttonFrame.width / 2 - panelWidth / 2
+        var y = buttonFrame.origin.y - panelHeight - margin
+
+        // 确保不超出屏幕边界
+        x = max(screenFrame.origin.x + margin, min(x, screenFrame.origin.x + screenFrame.width - panelWidth - margin))
+        y = max(screenFrame.origin.y + margin, y)
+
+        setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+
+    // 点击外部关闭
+    override func resignKey() {
+        super.resignKey()
+        orderOut(nil)
+        onPanelHidden()
     }
 }
 
@@ -153,15 +192,12 @@ struct StatusBarMenuView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(nsColor: .controlBackgroundColor))
 
             Divider()
 
             // Provider List
             ScrollView {
                 VStack(spacing: 0) {
-                    Spacer().frame(width: 280, height: 0)
-
                     // Claude Code Section
                     if !claudeProviders.isEmpty {
                         SectionHeader(title: "Claude Code")
@@ -232,12 +268,11 @@ struct StatusBarMenuView: View {
                 }
                 .padding(.vertical, 8)
             }
-            .frame(maxHeight: 280)
 
             Divider()
 
             // Footer
-            HStack {
+            HStack(spacing: 12) {
                 Button {
                     onQuit()
                 } label: {
@@ -252,17 +287,39 @@ struct StatusBarMenuView: View {
                 .foregroundStyle(.secondary)
 
                 Spacer()
+
+                Menu {
+                    Button("Claude Code") {
+                        openConfig(for: .claudeCode)
+                    }
+                    Button("Codex") {
+                        openConfig(for: .codex)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 10, weight: .medium))
+                        Text("Config")
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(themeManager.brandColor)
+                    .foregroundStyle(.black)
+                    .clipShape(Capsule())
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(nsColor: .controlBackgroundColor))
         }
-        .frame(width: 280)
+        .frame(width: 280, height: 400)
         .background(Color(nsColor: .windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
     }
 
@@ -272,6 +329,38 @@ struct StatusBarMenuView: View {
 
     private var codexProviders: [Provider] {
         providerStore.providers.filter { $0.type == .codex }
+    }
+
+    private enum ConfigTarget {
+        case claudeCode
+        case codex
+    }
+
+    private func openConfig(for target: ConfigTarget) {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let url: URL
+        switch target {
+        case .claudeCode:
+            url = home.appendingPathComponent(".claude/settings.json")
+        case .codex:
+            url = home.appendingPathComponent(".codex/config.toml")
+        }
+
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            let parent = url.deletingLastPathComponent()
+            try? FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
+            FileManager.default.createFile(atPath: url.path, contents: nil)
+            return
+        }
+
+        if let editor = EditorManager.shared.selectedEditor {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            task.arguments = ["-a", editor.cliCommand, url.path]
+            try? task.run()
+        } else {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
 
@@ -344,6 +433,5 @@ struct SectionHeader: View {
         .foregroundStyle(.secondary)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
     }
 }
