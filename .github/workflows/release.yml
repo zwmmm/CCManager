@@ -94,15 +94,15 @@ jobs:
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
-            echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
-              --ed-key-file - \
-              --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/${{ github.ref_name }}/" \
-              -o docs/appcast.xml \
-              build/Build/Products/Release/
-          else
-            echo "Warning: SPARKLE_PRIVATE_KEY not set, skipping appcast generation"
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "Error: SPARKLE_PRIVATE_KEY secret is not set"
+            exit 1
           fi
+          echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/${{ github.ref_name }}/" \
+            -o docs/appcast.xml \
+            build/Build/Products/Release/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

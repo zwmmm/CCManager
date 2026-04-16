@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1] - 2026-04-16
+
+### Others
+
+- chore: add .claude directory
+- chore: 调整布局间距和更新颜色名称
+- refactor: 使用 NSCache 重构头像缓存
+- chore: translate CHANGELOG to English
+
 ## [1.1.0] - 2026-04-16
 
 ### Features
