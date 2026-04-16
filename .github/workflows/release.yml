@@ -90,7 +90,7 @@ jobs:
           RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
           # Insert description tag into appcast.xml <item>
           sed -i '' 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\
-    </item>|' docs/appcast.xml
+          </item>|' docs/appcast.xml
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
