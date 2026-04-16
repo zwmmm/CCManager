@@ -47,25 +47,34 @@ grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" CCManager.xcodeproj/project.
 查找上一个 tag 到当前 HEAD 之间的所有提交：
 
 ```bash
-git log v1.0.1..HEAD --oneline --format="### %s%n" 2>/dev/null
+git log v1.0.1..HEAD --oneline
 ```
 
-Group into CHANGELOG template:
+分析所有提交，**用英文总结每类变更的核心内容**，而非简单罗列 commit message。
 
 ```
 ## [New Version] - YYYY-MM-DD
 
 ### Features
-- feat: related commits
+- [English summary of feature changes]
 
 ### Bug Fixes
-- fix: related commits
+- [English summary of bug fixes]
 
 ### Others
-- chore/docs/ref: related commits
+- [English summary of chore/docs/refactor changes]
 ```
 
-如果中间有 ` BREAKING CHANGE:`，在 `##` 下方添加 `**Breaking Change**` 标记。
+示例：
+```
+### Features
+- Add DMG packaging support for macOS distribution
+
+### Bug Fixes
+- Fix appcast.xml generation to use GitHub Release assets
+```
+
+如果中间有 `BREAKING CHANGE:`，在 `##` 下方添加 `**Breaking Change**` 标记。
 
 ### Step 4: 更新版本号
 
