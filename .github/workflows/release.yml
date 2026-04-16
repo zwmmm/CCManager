@@ -96,6 +96,6 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
             build/Build/Products/Release/CCManager-${{ github.ref_name }}.zip
             docs/appcast.xml
-          body_path: release-notes.md
+          body_path: ${{ github.workspace }}/release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
