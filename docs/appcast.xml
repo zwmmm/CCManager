@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>CCManager Updates</title>
+        <link>https://github.com/zwmmm/CCManager</link>
+        <language>en</language>
+
+        <!-- Initial release will be added by GitHub Actions -->
+    </channel>
+</rss>
