@@ -85,6 +85,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Checkout main branch to push changes
+          git checkout main
           git add docs/appcast.xml
           git commit -m "chore: update appcast.xml for ${{ github.ref_name }}" || echo "No changes"
-          git push
+          git push origin main
