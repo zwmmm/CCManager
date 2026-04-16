@@ -12,21 +12,22 @@
 		150155C6D4D49A3BE04790D3 /* PixelAvatarCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */; };
 		1800E1192C09A663B6E4DB63 /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD06ABB1DF74A86A4B09EA8 /* ConfigWriter.swift */; };
 		228B2B5533FA4B35A93BFE40 /* EditorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C59CDE979907DB909860DF /* EditorManager.swift */; };
+		26FA3DA69FD3E6ACB2ADB7BB /* ProviderTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5245619721F53DE17CE6B05 /* ProviderTester.swift */; };
 		4FE5220BBD51F5DFF497D6BD /* ProviderFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BABCAFBE8308830BF833121 /* ProviderFormView.swift */; };
 		582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1337C4E3B6B34325B2491F3B /* AppDelegate.swift */; };
 		6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */; };
+		75E0E7A60936364918D1C78D /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6057F4D68D8F944EFE6D9BE /* ToastView.swift */; };
+		777BD8376621B35EAF543A4F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 171E268F104B15D8AEE7F408 /* Sparkle */; };
 		7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */; };
 		8761137C385660B7776D7F44 /* ProviderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE708FAEB509391E76CCD50F /* ProviderListView.swift */; };
 		877C06474BF152A5D5F12A99 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */; };
 		945796ED1E4A94246883FC45 /* PixelAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DADC1F9CD32A3782FCFDD1F /* PixelAvatarView.swift */; };
 		9BD5B7A6E4681CB21D3B6331 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9E77A4C1C64E103E602C313A /* SQLite */; };
-		A1B2C3D4E5F6789012345678 /* ProviderTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6789012345678901 /* ProviderTester.swift */; };
 		ABC0DF4512367832C60E265C /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97CB82053021720EA6C0CFF /* main.swift */; };
 		C30E163DC68D313AA0441540 /* MingcuteClaudeFill.png in Resources */ = {isa = PBXBuildFile; fileRef = 4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */; };
 		CCD1BC5FAA3549B8DFF6270A /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */; };
 		D3383F66529ADD615FF1786B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA0D519C657FBE143B7067CE /* Assets.xcassets */; };
 		E0DDB91DDEFBAC77D66AAACA /* ProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F35BF8EA640544D49399E6 /* ProviderStore.swift */; };
-		F1A2B3C4D5E6F78901234567 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4012345678901 /* ToastView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,11 +42,11 @@
 		8CD06ABB1DF74A86A4B09EA8 /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
 		9BABCAFBE8308830BF833121 /* ProviderFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderFormView.swift; sourceTree = "<group>"; };
 		9DADC1F9CD32A3782FCFDD1F /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
-		A9B8C7D6E5F4012345678901 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
-		B2C3D4E5F6789012345678901 /* ProviderTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTester.swift; sourceTree = "<group>"; };
+		B6057F4D68D8F944EFE6D9BE /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		BFED1EC577CE6AFFD3CA1E4C /* CCManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CCManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D5245619721F53DE17CE6B05 /* ProviderTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTester.swift; sourceTree = "<group>"; };
 		D97CB82053021720EA6C0CFF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		DA0D519C657FBE143B7067CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DE708FAEB509391E76CCD50F /* ProviderListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderListView.swift; sourceTree = "<group>"; };
@@ -58,6 +59,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9BD5B7A6E4681CB21D3B6331 /* SQLite in Frameworks */,
+				777BD8376621B35EAF543A4F /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -93,7 +95,7 @@
 				9BABCAFBE8308830BF833121 /* ProviderFormView.swift */,
 				DE708FAEB509391E76CCD50F /* ProviderListView.swift */,
 				0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */,
-				A9B8C7D6E5F4012345678901 /* ToastView.swift */,
+				B6057F4D68D8F944EFE6D9BE /* ToastView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -129,7 +131,7 @@
 			children = (
 				8CD06ABB1DF74A86A4B09EA8 /* ConfigWriter.swift */,
 				69C59CDE979907DB909860DF /* EditorManager.swift */,
-				B2C3D4E5F6789012345678901 /* ProviderTester.swift */,
+				D5245619721F53DE17CE6B05 /* ProviderTester.swift */,
 				BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */,
 				E01A352B3F003C9DA9DC580A /* ThemeManager.swift */,
 			);
@@ -172,6 +174,7 @@
 			name = CCManager;
 			packageProductDependencies = (
 				9E77A4C1C64E103E602C313A /* SQLite */,
+				171E268F104B15D8AEE7F408 /* Sparkle */,
 			);
 			productName = CCManager;
 			productReference = BFED1EC577CE6AFFD3CA1E4C /* CCManager.app */;
@@ -202,6 +205,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6416ED52C932CB4AB0A689DE /* Products */;
@@ -240,12 +244,12 @@
 				0A39583DBB95FB44C0D3264C /* Provider.swift in Sources */,
 				4FE5220BBD51F5DFF497D6BD /* ProviderFormView.swift in Sources */,
 				8761137C385660B7776D7F44 /* ProviderListView.swift in Sources */,
-				A1B2C3D4E5F6789012345678 /* ProviderTester.swift in Sources */,
 				E0DDB91DDEFBAC77D66AAACA /* ProviderStore.swift in Sources */,
+				26FA3DA69FD3E6ACB2ADB7BB /* ProviderTester.swift in Sources */,
 				CCD1BC5FAA3549B8DFF6270A /* StatusBarController.swift in Sources */,
 				0B3208F764F054342083ABC9 /* ThemeManager.swift in Sources */,
 				6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */,
-				F1A2B3C4D5E6F78901234567 /* ToastView.swift in Sources */,
+				75E0E7A60936364918D1C78D /* ToastView.swift in Sources */,
 				ABC0DF4512367832C60E265C /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -432,6 +436,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
 		CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
@@ -443,6 +455,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		171E268F104B15D8AEE7F408 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		9E77A4C1C64E103E602C313A /* SQLite */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */;

@@ -21,6 +21,9 @@ packages:
   SQLite:
     url: https://github.com/stephencelis/SQLite.swift.git
     from: "0.15.0"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle.git
+    from: "2.6.0"
 
 targets:
   CCManager:
@@ -43,3 +46,5 @@ targets:
     dependencies:
       - package: SQLite
         product: SQLite
+      - package: Sparkle
+        product: Sparkle
