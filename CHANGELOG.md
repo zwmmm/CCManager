@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0] - 2026-04-17
+
+### Features
+
+- Optimize update installation flow and window management
+
+### Others
+
+- CI: Use stable Xcode version (no product changes)
+
 ## [1.2.0] - 2026-04-16
 
 ### Features

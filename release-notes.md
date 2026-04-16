@@ -1,12 +1,7 @@
 ### Features
 
-- Add custom update popup with Markdown release notes support
-
-### Bug Fixes
-
-- Fix appcast.xml generation using GitHub Release assets
+- Optimize update installation flow and window management
 
 ### Others
 
-- Add Down package dependency for Markdown rendering
-- Add app-release skill for standardized releases
+- CI: Use stable Xcode version (no product changes)
