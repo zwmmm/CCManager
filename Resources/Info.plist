@@ -30,7 +30,7 @@
     <string>NSApplication</string>
     <!-- Sparkle Configuration -->
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/zwmmm/CCManager/main/docs/appcast.xml</string>
+    <string>https://github.com/zwmmm/CCManager/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>Yema8RsV8OzTEQZk9WIU0UllriwHY08uPLlQDikHSsQ=</string>
     <key>SUEnableAutomaticChecks</key>
