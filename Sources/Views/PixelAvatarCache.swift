@@ -31,7 +31,15 @@ final class PixelAvatarCache {
         hostingView.frame = NSRect(x: 0, y: 0, width: size, height: size)
         hostingView.layoutSubtreeIfNeeded()
 
-        let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds)!
+        guard let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds) else {
+            // Fallback: Return a simple colored square when bitmap capture fails (e.g., view not in window hierarchy)
+            let fallback = NSImage(size: NSSize(width: size, height: size))
+            fallback.lockFocus()
+            NSColor.gray.setFill()
+            NSRect(x: 0, y: 0, width: size, height: size).fill()
+            fallback.unlockFocus()
+            return fallback
+        }
         hostingView.cacheDisplay(in: hostingView.bounds, to: bitmapRep)
 
         let image = NSImage(size: NSSize(width: size, height: size))

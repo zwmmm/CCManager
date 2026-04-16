@@ -44,7 +44,7 @@ struct PresetProvider {
         PresetProvider(name: "GLM Global", type: .claudeCode, baseUrl: "https://api.z.ai/api/anthropic", model: "glm-5"),
         PresetProvider(name: "MiniMax", type: .claudeCode, baseUrl: "https://api.minimaxi.com/anthropic", model: "MiniMax-M2.7"),
         PresetProvider(name: "MiniMax Global", type: .claudeCode, baseUrl: "https://api.minimax.io/anthropic", model: "MiniMax-M2.7"),
-        PresetProvider(name: "Kimi", type: .claudeCode, baseUrl: "https://api.moonshot.cn/anthropic", model: "kimi-k2.5"),
+        PresetProvider(name: "Kimi", type: .claudeCode, baseUrl: "https://api.kimi.com/coding", model: "kimi-k2.5"),
         PresetProvider(name: "Anthropic", type: .claudeCode, baseUrl: "https://api.anthropic.com", model: defaultClaudeModel),
         PresetProvider(name: "OpenRouter (CC)", type: .claudeCode, baseUrl: "https://openrouter.ai/api/v1", model: "anthropic/claude-3-sonnet"),
         // Codex
