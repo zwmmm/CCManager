@@ -24,6 +24,9 @@ struct ProviderFormView: View {
     @State private var apiKey: String = ""
     @State private var baseUrl: String = ""
     @State private var model: String = ""
+    @State private var isTesting: Bool = false
+    @State private var testMessage: String?
+    @State private var testSuccess: Bool = false
 
     private var baseUrlPlaceholder: String {
         type == .codex ? "https://api.openai.com/v1" : "https://api.anthropic.com"
@@ -139,6 +142,31 @@ struct ProviderFormView: View {
 
                 Spacer()
 
+                // Test result message
+                if let msg = testMessage {
+                    HStack(spacing: 4) {
+                        Image(systemName: testSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundStyle(testSuccess ? .green : .red)
+                        Text(msg)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Button {
+                    Task { await testProvider() }
+                } label: {
+                    if isTesting {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                            .frame(width: 16, height: 16)
+                    } else {
+                        Text("Test")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(!isValid || isTesting)
+
                 Button(isEditing ? "Save" : "Add") {
                     saveProvider()
                 }
@@ -213,5 +241,33 @@ struct ProviderFormView: View {
         }
         onSave(provider)
         dismiss()
+    }
+
+    private func testProvider() async {
+        guard isValid else { return }
+
+        isTesting = true
+        testMessage = nil
+
+        let provider = Provider(
+            name: name.trimmingCharacters(in: .whitespaces),
+            type: type,
+            apiKey: apiKey.trimmingCharacters(in: .whitespaces),
+            baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
+            model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces)
+        )
+
+        let result = await ProviderTester.shared.test(provider: provider)
+
+        isTesting = false
+
+        switch result {
+        case .success:
+            testSuccess = true
+            testMessage = "OK"
+        case .failure(let error):
+            testSuccess = false
+            testMessage = error
+        }
     }
 }
