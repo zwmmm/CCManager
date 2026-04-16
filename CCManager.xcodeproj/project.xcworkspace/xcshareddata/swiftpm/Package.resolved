@@ -1,6 +1,15 @@
 {
-  "originHash" : "4a7a48a80bbfdb8b4387e7df019a5a452ae881652de1bcfa893a8cc3fd815ef9",
+  "originHash" : "3b060f039c9e44c96c343354d2b8de26feae240477e64b1ef2b8a5050a5d3b4d",
   "pins" : [
+    {
+      "identity" : "down",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/johnxnguyen/Down.git",
+      "state" : {
+        "revision" : "f34b166be1f1db4aa8f573067e901d72f2a6be57",
+        "version" : "0.11.0"
+      }
+    },
     {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",

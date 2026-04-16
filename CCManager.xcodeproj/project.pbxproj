@@ -29,6 +29,8 @@
 		D3383F66529ADD615FF1786B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA0D519C657FBE143B7067CE /* Assets.xcassets */; };
 		E0DDB91DDEFBAC77D66AAACA /* ProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F35BF8EA640544D49399E6 /* ProviderStore.swift */; };
 		E6A0856C72AD63B47B4F6A68 /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47E81B53F3350B368B416052 /* UpdateManager.swift */; };
+		EC5C42272DDD5B6C3CDB6B0C /* UpdateWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */; };
+		F903F54F1755334827B29D7D /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = F624A892D11177B736EB4699 /* Down */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +39,7 @@
 		1337C4E3B6B34325B2491F3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarCache.swift; sourceTree = "<group>"; };
 		3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
+		3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateWindowController.swift; sourceTree = "<group>"; };
 		47E81B53F3350B368B416052 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MingcuteClaudeFill.png; sourceTree = "<group>"; };
 		5E8130E2B4C43CCB2C689D79 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
@@ -62,6 +65,7 @@
 			files = (
 				9BD5B7A6E4681CB21D3B6331 /* SQLite in Frameworks */,
 				777BD8376621B35EAF543A4F /* Sparkle in Frameworks */,
+				F903F54F1755334827B29D7D /* Down in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +102,7 @@
 				DE708FAEB509391E76CCD50F /* ProviderListView.swift */,
 				0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */,
 				B6057F4D68D8F944EFE6D9BE /* ToastView.swift */,
+				3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -178,6 +183,7 @@
 			packageProductDependencies = (
 				9E77A4C1C64E103E602C313A /* SQLite */,
 				171E268F104B15D8AEE7F408 /* Sparkle */,
+				F624A892D11177B736EB4699 /* Down */,
 			);
 			productName = CCManager;
 			productReference = BFED1EC577CE6AFFD3CA1E4C /* CCManager.app */;
@@ -207,6 +213,7 @@
 			mainGroup = F5D653436CA68F2AD968A843;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				9443B85D7B7729A6E0760A18 /* XCRemoteSwiftPackageReference "Down" */,
 				CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */,
 				5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
@@ -254,6 +261,7 @@
 				6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */,
 				75E0E7A60936364918D1C78D /* ToastView.swift in Sources */,
 				E6A0856C72AD63B47B4F6A68 /* UpdateManager.swift in Sources */,
+				EC5C42272DDD5B6C3CDB6B0C /* UpdateWindowController.swift in Sources */,
 				ABC0DF4512367832C60E265C /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -448,6 +456,14 @@
 				minimumVersion = 2.6.0;
 			};
 		};
+		9443B85D7B7729A6E0760A18 /* XCRemoteSwiftPackageReference "Down" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/johnxnguyen/Down.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.11.0;
+			};
+		};
 		CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
@@ -468,6 +484,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */;
 			productName = SQLite;
+		};
+		F624A892D11177B736EB4699 /* Down */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9443B85D7B7729A6E0760A18 /* XCRemoteSwiftPackageReference "Down" */;
+			productName = Down;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

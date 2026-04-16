@@ -24,6 +24,9 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle.git
     from: "2.6.0"
+  Down:
+    url: https://github.com/johnxnguyen/Down.git
+    from: "0.11.0"
 
 targets:
   CCManager:
@@ -48,3 +51,5 @@ targets:
         product: SQLite
       - package: Sparkle
         product: Sparkle
+      - package: Down
+        product: Down
