@@ -272,7 +272,7 @@ struct StatusBarMenuView: View {
             Divider()
 
             // Footer
-            HStack(spacing: 12) {
+            HStack {
                 Button {
                     onQuit()
                 } label: {

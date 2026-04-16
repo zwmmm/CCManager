@@ -223,9 +223,9 @@ struct ColorPalette {
     ]
 
     static let defaultBrandColor = ChineseColor(
-        name: "碧螺春绿",
-        pinyin: "biluochunlv",
-        hex: "867018",
+        name: "粉绿",
+        pinyin: "fenlv",
+        hex: "83cbac",
         category: .green
     )
 
