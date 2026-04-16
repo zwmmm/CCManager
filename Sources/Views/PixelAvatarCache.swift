@@ -6,23 +6,41 @@ import SwiftUI
 final class PixelAvatarCache {
     static let shared = PixelAvatarCache()
 
-    private var cache: [String: NSImage] = [:]
-    private let queue = DispatchQueue(label: "com.ccmanager.avatarCache", attributes: .concurrent)
+    private let cache = NSCache<NSString, NSImage>()
 
-    private init() {}
+    private init() {
+        cache.countLimit = 100
+    }
 
     func avatar(for name: String, type: ProviderType, size: CGFloat) -> NSImage {
-        let key = "\(name)-\(type.rawValue)-\(Int(size))"
+        let key = "\(name)-\(type.rawValue)-\(Int(size))" as NSString
 
-        return queue.sync {
-            if let cached = cache[key], cached.isValid {
-                return cached
-            }
-
-            let image = renderAvatar(name: name, type: type, size: size)
-            cache[key] = image
-            return image
+        if let cached = cache.object(forKey: key) {
+            return cached
         }
+
+        // renderAvatar must run on main thread (AppKit restriction)
+        var image: NSImage?
+        if Thread.isMainThread {
+            image = renderAvatar(name: name, type: type, size: size)
+        } else {
+            DispatchQueue.main.sync {
+                image = renderAvatar(name: name, type: type, size: size)
+            }
+        }
+
+        if let img = image {
+            cache.setObject(img, forKey: key)
+            return img
+        }
+
+        // Fallback if rendering failed
+        let fallback = NSImage(size: NSSize(width: size, height: size))
+        fallback.lockFocus()
+        NSColor.gray.setFill()
+        NSRect(x: 0, y: 0, width: size, height: size).fill()
+        fallback.unlockFocus()
+        return fallback
     }
 
     private func renderAvatar(name: String, type: ProviderType, size: CGFloat) -> NSImage {
@@ -48,9 +66,7 @@ final class PixelAvatarCache {
     }
 
     func clearCache() {
-        queue.async(flags: .barrier) {
-            self.cache.removeAll()
-        }
+        cache.removeAllObjects()
     }
 }
 
