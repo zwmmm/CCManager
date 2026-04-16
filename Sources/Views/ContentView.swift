@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var providerStore: ProviderStore
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var updateManager: UpdateManager
 
     @State private var showingAddSheet = false
     @State private var showingSettings = false
@@ -32,6 +33,13 @@ struct ContentView: View {
         }
         .preferredColorScheme(themeManager.colorScheme)
         .accentColor(themeManager.brandColor)
+        .onChange(of: updateManager.updateInstalled) { installed in
+            if installed {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    updateManager.updateInstalled = false
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
             showingSettings = true
         }
