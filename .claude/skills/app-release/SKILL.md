@@ -78,20 +78,21 @@ git log v1.0.1..HEAD --oneline
 
 ### Step 4: 更新版本号
 
-修改 `CCManager.xcodeproj/project.pbxproj`：
+`project.yml` 是 XcodeGen 的源头配置，**必须同时修改**：
 
 ```bash
-# 替换 MARKETING_VERSION（如 1.0.0 → 1.0.1 或 1.1.0）
-sed -i '' 's/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = X.Y.Z;/' CCManager.xcodeproj/project.pbxproj
+# 修改 project.yml（XcodeGen 源头）
+sed -i '' 's/MARKETING_VERSION: ".*"/MARKETING_VERSION: "X.Y.Z"/' project.yml
+sed -i '' 's/CURRENT_PROJECT_VERSION: "[0-9]*"/CURRENT_PROJECT_VERSION: "N"/' project.yml
 
-# 递增 CURRENT_PROJECT_VERSION（+1）
-sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = N;/' CCManager.xcodeproj/project.pbxproj
+# 重新生成 project.pbxproj（确保本地构建也使用正确版本）
+xcodegen generate
 ```
 
 ### Step 5: 提交更改
 
 ```bash
-git add CCManager.xcodeproj/project.pbxproj CHANGELOG.md
+git add project.yml CCManager.xcodeproj/project.pbxproj CHANGELOG.md
 git commit -m "release: vX.Y.Z"
 ```
 
