@@ -1,6 +1,20 @@
 # Changelog
 
-## [1.0.0] - 2026-04-16
+## [1.1.0] - 2026-04-16
+
+### 功能特性
+
+- feat: extract release notes from CHANGELOG.md
+- feat: add DMG packaging to release workflow
+- feat(provider): 添加高级模型配置功能
+
+### Bug 修复
+
+- fix: serve appcast.xml from GitHub Release instead of repo
+- fix: checkout main branch before pushing appcast update
+- fix: correct bash variable substitution in release workflow
+
+## [1.0.1] - 2026-04-16
 
 ### 功能特性
 
