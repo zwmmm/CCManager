@@ -89,7 +89,8 @@ jobs:
           # Escape special characters for XML
           RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
           # Insert description tag into appcast.xml <item>
-          sed -i "s|</item>|  <description><![CDATA[${RELEASE_NOTES}]]></description>\\n    </item>|" docs/appcast.xml
+          sed -i '' 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\
+    </item>|' docs/appcast.xml
           echo "Injected release notes into appcast.xml"
 
       - name: Create Release
