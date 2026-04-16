@@ -2,13 +2,13 @@
 
 ## [1.1.0] - 2026-04-16
 
-### 功能特性
+### Features
 
 - feat: extract release notes from CHANGELOG.md
 - feat: add DMG packaging to release workflow
-- feat(provider): 添加高级模型配置功能
+- feat(provider): add advanced model configuration
 
-### Bug 修复
+### Bug Fixes
 
 - fix: serve appcast.xml from GitHub Release instead of repo
 - fix: checkout main branch before pushing appcast update
@@ -16,21 +16,21 @@
 
 ## [1.0.1] - 2026-04-16
 
-### 功能特性
+### Features
 
-- **Provider 管理**: 支持多个 AI Provider 配置和管理
-- **高级模型配置**: 自定义模型参数和高级设置
-- **主题系统**: 可自定义的主题配置
-- **状态栏集成**: 便捷的状态栏菜单和快捷操作
-- **自动更新**: 基于 Sparkle 的自动更新功能
+- **Provider Management**: Multiple AI provider configuration and management
+- **Advanced Model Configuration**: Custom model parameters and advanced settings
+- **Theme System**: Customizable theme configuration
+- **Status Bar Integration**: Convenient status bar menu and quick actions
+- **Auto Update**: Sparkle-based automatic update functionality
 
-### 技术栈
+### Tech Stack
 
-- SwiftUI + AppKit 混合架构
-- SQLite 本地存储
-- Sparkle 2.x 自动更新框架
+- SwiftUI + AppKit Hybrid Architecture
+- SQLite Local Storage
+- Sparkle 2.x Auto Update Framework
 
-### 系统要求
+### System Requirements
 
 - macOS 13.0+
-- Apple Silicon 或 Intel Mac
+- Apple Silicon or Intel Mac
