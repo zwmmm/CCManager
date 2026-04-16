@@ -5,6 +5,7 @@ struct ThemeSettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var editorManager: EditorManager
     @EnvironmentObject var providerStore: ProviderStore
+    @EnvironmentObject var updateManager: UpdateManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var showEditorPicker = false
@@ -122,6 +123,16 @@ struct ThemeSettingsView: View {
                     sectionHeader("DATA MANAGEMENT")
 
                     dataManagementSection
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 18)
+
+                    Divider()
+                        .padding(.horizontal, 18)
+
+                    // About
+                    sectionHeader("ABOUT")
+
+                    aboutSection
                         .padding(.horizontal, 18)
                         .padding(.bottom, 18)
                 }
@@ -293,6 +304,41 @@ struct ThemeSettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    private var aboutSection: some View {
+        HStack(spacing: 0) {
+            // Version info
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Version")
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                Text(updateManager.currentVersion)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+            }
+
+            Spacer()
+
+            // Check for updates button
+            Button {
+                updateManager.checkForUpdates()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 10, weight: .medium))
+                    Text("Check for Updates")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(themeManager.brandColor.opacity(0.15))
+                .clipShape(Capsule())
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!updateManager.canCheckForUpdates)
+            .opacity(updateManager.canCheckForUpdates ? 1.0 : 0.5)
         }
     }
 
