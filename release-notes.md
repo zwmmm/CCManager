@@ -1,7 +1,3 @@
-### Features
-
-- Optimize update installation flow and window management
-
 ### Others
 
-- CI: Use stable Xcode version (no product changes)
+- CI: Update Xcode to 26.4 and macOS runner to 26

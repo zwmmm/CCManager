@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1] - 2026-04-17
+
+### Others
+
+- CI: Update Xcode to 26.4 and macOS runner to 26
+
 ## [1.3.0] - 2026-04-17
 
 ### Features
