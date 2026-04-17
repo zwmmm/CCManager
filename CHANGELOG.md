@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.8] - 2026-04-17
+
+### Others
+
+- Refactor Codex configuration to use separate auth.json and config.toml files
+- Update CI Xcode version to 26.4
+
 ## [1.3.7] - 2026-04-17
 
 ### Others
