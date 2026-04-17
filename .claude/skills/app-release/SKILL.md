@@ -163,6 +163,16 @@ RELEASE_NOTES=$(awk '{gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&g
 perl -0777 -i -pe 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\n</item>|' docs/appcast.xml
 ```
 
+添加 release notes 链接（指向仓库地址，而非 release 资产地址）：
+
+```bash
+# 在 <sparkle:minimumSystemVersion> 后添加 releaseNotesLink
+# 注意：使用仓库 blob 地址，不是 release download 地址
+sed -i '' '/<sparkle:minimumSystemVersion>/a\
+      <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
+' docs/appcast.xml
+```
+
 ### Step 8: 创建 GitHub Release
 
 ```bash
