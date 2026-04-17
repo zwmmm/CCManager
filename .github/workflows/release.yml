@@ -48,6 +48,14 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             | xcpretty && exit ${PIPESTATUS[0]}
 
+      - name: Re-sign Sparkle.framework
+        run: |
+          SPARKLE_PATH="build/Build/Products/Release/CCManager.app/Contents/Frameworks/Sparkle.framework"
+          if [ -d "$SPARKLE_PATH" ]; then
+            echo "Re-signing Sparkle.framework..."
+            codesign --force --deep --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" "$SPARKLE_PATH"
+          fi
+
       - name: Package App
         run: |
           cd build/Build/Products/Release
