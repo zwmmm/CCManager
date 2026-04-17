@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.9] - 2026-04-17
+
+### Others
+
+- Update app-release skill to support local builds with DMG packaging
+- Remove GitHub Actions release workflow (replaced by local release process)
+
 ## [1.3.8] - 2026-04-17
 
 ### Others

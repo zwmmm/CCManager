@@ -1,4 +1,4 @@
 ### Others
 
-- Refactor Codex configuration to use separate auth.json and config.toml files
-- Update CI Xcode version to 26.4
+- Update app-release skill to support local builds with DMG packaging
+- Remove GitHub Actions release workflow (replaced by local release process)

@@ -1,18 +1,20 @@
 ---
 name: app-release
-description: 使用本 skill 发布 macOS 应用。自动生成 CHANGELOG、递增版本号、提交代码并打 tag 推送到远程。
+description: 使用本 skill 发布 macOS 应用。自动构建、生成 appcast、创建 GitHub Release。
 ---
 
 # App Release
 
-发布 macOS 应用的标准流程：更新版本号 → 更新 CHANGELOG → 更新 release-notes.md → 提交代码 → 打 tag → 推送。
+发布 macOS 应用的标准流程：更新版本号 → 更新 CHANGELOG → 构建 → 打包 → 生成 appcast → 创建 Release → 提交代码 → 打 tag。
 
 ## 前置条件
 
 - 项目使用 XcodeGen，版本信息存储在 `project.yml` 的 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`
-- 项目根目录存在 `CHANGELOG.md` 和 `release-notes.md`
+- 项目根目录存在 `CHANGELOG.md`、`release-notes.md` 和 `docs/appcast.xml`
 - Git 仓库已有至少一个 tag（作为上一个版本基准）
-- Sparkle 私钥已配置在 GitHub Secrets (`SPARKLE_PRIVATE_KEY`)
+- Sparkle 私钥已配置在 `~/.config/CCManager/sparkle_ed25519`（EdDSA 私钥文件）
+- `gh` CLI 已登录并有 repo 权限
+- 本地需要安装 XcodeGen
 - 需要确保没有未提交的更改
 
 ## 发布流程
@@ -99,14 +101,96 @@ git log v1.0.1..HEAD --oneline
 - Fix appcast.xml generation to use GitHub Release assets
 ```
 
-### Step 6: 提交更改
+### Step 6: 构建和打包
 
 ```bash
-git add project.yml CCManager.xcodeproj/project.pbxproj CHANGELOG.md release-notes.md
+BUILD_DIR="/tmp/CCManager-release"
+rm -rf "$BUILD_DIR"
+
+# 构建 Release
+xcodebuild \
+  -project CCManager.xcodeproj \
+  -scheme CCManager \
+  -configuration Release \
+  -destination "platform=macOS,arch=arm64" \
+  -derivedDataPath "$BUILD_DIR" \
+  CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
+  CODE_SIGN_STYLE=Manual \
+  CODE_SIGN_TEAM_ID=UY3VY8BA83 \
+  ENABLE_HARDENED_RUNTIME=YES \
+  build
+
+# 打包 zip
+cd "$BUILD_DIR/Build/Products/Release"
+zip -r "$BUILD_DIR/CCManager-vX.Y.Z.zip" CCManager.app
+
+# 打包 DMG
+mkdir -p "$BUILD_DIR/dmg_temp"
+cp -R CCManager.app "$BUILD_DIR/dmg_temp/"
+ln -sf /Applications "$BUILD_DIR/dmg_temp/Applications
+hdiutil create -volname "CCManager" \
+  -srcfolder "$BUILD_DIR/dmg_temp" \
+  -ov -format UDZO \
+  "$BUILD_DIR/CCManager-vX.Y.Z.dmg"
+rm -rf "$BUILD_DIR/dmg_temp"
+cd -
+```
+
+### Step 7: 生成 Appcast
+
+下载 Sparkle 工具：
+
+```bash
+SPARKLE_VERSION="2.6.0"
+if [ ! -f "$BUILD_DIR/bin/generate_appcast" ]; then
+  curl -L -o "$BUILD_DIR/sparkle.tar.xz" \
+    "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+  tar -xf "$BUILD_DIR/sparkle.tar.xz" -C "$BUILD_DIR"
+fi
+```
+
+生成 appcast：
+
+```bash
+"$BUILD_DIR/bin/generate_appcast" \
+  --ed-key-file ~/.config/CCManager/sparkle_ed25519 \
+  --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/vX.Y.Z/" \
+  -o docs/appcast.xml \
+  "$BUILD_DIR/Build/Products/Release/"
+```
+
+注入 release notes 到 appcast：
+
+```bash
+RELEASE_NOTES=$(awk '{gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); printf "%s\\n", $0}' release-notes.md | sed 's/\\n$//')
+perl -0777 -i -pe 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\n</item>|' docs/appcast.xml
+```
+
+### Step 8: 创建 GitHub Release
+
+```bash
+gh release create vX.Y.Z \
+  --title "Release vX.Y.Z" \
+  --notes-file release-notes.md \
+  "$BUILD_DIR/CCManager-vX.Y.Z.dmg" \
+  "$BUILD_DIR/CCManager-vX.Y.Z.zip" \
+  docs/appcast.xml
+```
+
+清理构建目录（可选）：
+
+```bash
+rm -rf "$BUILD_DIR"
+```
+
+### Step 9: 提交更改
+
+```bash
+git add project.yml CCManager.xcodeproj/project.pbxproj CHANGELOG.md release-notes.md docs/appcast.xml
 git commit -m "release: vX.Y.Z"
 ```
 
-### Step 7: 创建并推送 tag
+### Step 10: 推送 tag
 
 ```bash
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
@@ -120,6 +204,14 @@ git push origin main && git push origin vX.Y.Z
 ```bash
 git log --oneline -3
 git tag --list | grep vX.Y.Z
+gh release view vX.Y.Z
+```
+
+## 环境变量
+
+构建签名需要设置：
+```bash
+export CODE_SIGN_IDENTITY="-"  # 或者你的签名 identity
 ```
 
 ## 错误处理
@@ -127,3 +219,4 @@ git tag --list | grep vX.Y.Z
 - 如果工作区不干净 → 先 `git stash` 或让用户确认已提交
 - 如果没有找到上一个 tag → 提示用户指定基准 tag
 - 如果推送失败 → 检查远程是否已存在该 tag
+- 如果 Sparkle 私钥不存在 → 提示配置 `~/.config/CCManager/sparkle_ed25519`
