@@ -53,57 +53,29 @@ final class ConfigWriter {
         try data.write(to: claudeSettings, options: .atomic)
     }
 
-    // MARK: - Codex → ~/.codex/config.toml
+    // MARK: - Codex → ~/.codex/auth.json + config.toml
 
     private func writeCodexConfig(_ provider: Provider) throws {
         try fileManager.createDirectory(at: codexDir, withIntermediateDirectories: true)
 
         let model = provider.model ?? PresetProvider.defaultCodexModel
 
-        // Read and preserve unrelated fields from existing config
-        var existing = readExistingToml()
-        existing["model"] = model
-        existing["model_provider"] = "ccmanager"
+        // Write auth.json
+        let auth: [String: String] = ["OPENAI_API_KEY": provider.apiKey]
+        let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
+        try authData.write(to: codexDir.appendingPathComponent("auth.json"), options: .atomic)
 
-        // Build provider block (overwrite only our managed block)
-        let providerBlock = """
+        // Write config.toml
+        let toml = """
+            model_provider = "ccmanager"
+            model = "\(model)"
+
             [model_providers.ccmanager]
-            name = "CCManager"
+            name = "\(provider.name)"
             base_url = "\(provider.baseUrl)"
-            api_key = "\(provider.apiKey)"
             """
 
-        let toml = buildToml(scalars: existing, extraBlocks: [providerBlock])
         try toml.write(to: codexConfig, atomically: true, encoding: .utf8)
-    }
-
-    // MARK: - Minimal TOML helpers (no dependency)
-
-    /// Read top-level scalar key=value pairs from existing config.toml (preserves non-managed fields)
-    private func readExistingToml() -> [String: String] {
-        guard let text = try? String(contentsOf: codexConfig, encoding: .utf8) else { return [:] }
-        var result: [String: String] = [:]
-        let managedKeys: Set<String> = ["model", "model_provider"]
-        for line in text.components(separatedBy: .newlines) {
-            let stripped = line.trimmingCharacters(in: .whitespaces)
-            guard !stripped.hasPrefix("["), !stripped.hasPrefix("#"), stripped.contains("=") else { continue }
-            let parts = stripped.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-            guard parts.count == 2 else { continue }
-            let key = parts[0]
-            guard !managedKeys.contains(key) else { continue }
-            result[key] = parts[1]
-        }
-        return result
-    }
-
-    private func buildToml(scalars: [String: String], extraBlocks: [String]) -> String {
-        var lines = ["# Managed by CCManager (model/model_provider/model_providers.ccmanager)"]
-        for (k, v) in scalars.sorted(by: { $0.key < $1.key }) {
-            lines.append("\(k) = \(v)")
-        }
-        lines.append("")
-        lines.append(contentsOf: extraBlocks)
-        return lines.joined(separator: "\n") + "\n"
     }
 
     // MARK: - Read helpers
