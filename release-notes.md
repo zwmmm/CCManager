@@ -1,3 +1,3 @@
 ### Others
 
-- Update standard Swift/Xcode gitignore rules and remove user-specific xcuserdata files from tracking
+- Improve CI release workflow code signing configuration

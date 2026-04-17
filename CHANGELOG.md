@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.5] - 2026-04-17
+
+### Others
+
+- Improve CI release workflow code signing configuration
+
 ## [1.3.4] - 2026-04-17
 
 ### Others
