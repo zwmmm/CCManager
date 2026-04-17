@@ -54,3 +54,9 @@ targets:
         product: Sparkle
       - package: Down
         product: Down
+
+schemes:
+  CCManager:
+    build:
+      targets:
+        CCManager: all
