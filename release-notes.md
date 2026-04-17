@@ -1,3 +1,3 @@
 ### Others
 
-- Configure code signing settings
+- Remove macOS runner code signing configuration

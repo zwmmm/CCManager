@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.3] - 2026-04-17
+
+### Others
+
+- Remove macOS runner code signing configuration
+
 ## [1.3.2] - 2026-04-17
 
 ### Others
