@@ -114,9 +114,6 @@ xcodebuild \
   -configuration Release \
   -destination "platform=macOS,arch=arm64" \
   -derivedDataPath "$BUILD_DIR" \
-  CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
-  CODE_SIGN_STYLE=Manual \
-  CODE_SIGN_TEAM_ID=UY3VY8BA83 \
   ENABLE_HARDENED_RUNTIME=YES \
   build
 
@@ -209,10 +206,7 @@ gh release view vX.Y.Z
 
 ## 环境变量
 
-构建签名需要设置：
-```bash
-export CODE_SIGN_IDENTITY="-"  # 或者你的签名 identity
-```
+通常不需要额外环境变量，签名由 Xcode 自动处理（Ad-hoc 或 Development）。
 
 ## 错误处理
 

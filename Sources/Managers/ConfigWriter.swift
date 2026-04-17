@@ -60,22 +60,20 @@ final class ConfigWriter {
 
         let model = provider.model ?? PresetProvider.defaultCodexModel
 
-        // Write auth.json
-        let auth: [String: String] = ["OPENAI_API_KEY": provider.apiKey]
+        // Write auth.json (merge with existing)
+        let authUrl = codexDir.appendingPathComponent("auth.json")
+        var auth: [String: String] = (try? Data(contentsOf: authUrl))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] } ?? [:]
+        auth["OPENAI_API_KEY"] = provider.apiKey
         let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
-        try authData.write(to: codexDir.appendingPathComponent("auth.json"), options: .atomic)
+        try authData.write(to: authUrl, options: .atomic)
 
-        // Write config.toml
-        let toml = """
-            model_provider = "ccmanager"
-            model = "\(model)"
-
-            [model_providers.ccmanager]
-            name = "\(provider.name)"
-            base_url = "\(provider.baseUrl)"
-            """
-
-        try toml.write(to: codexConfig, atomically: true, encoding: .utf8)
+        // Write config.toml (merge with existing)
+        var tomlContent = (try? String(contentsOf: codexConfig, encoding: .utf8)) ?? ""
+        tomlContent = tomlContent.replacingOccurrences(of: #"model\s*=\s*"[^"]*""#, with: "model = \"\(model)\"", options: .regularExpression)
+        tomlContent = tomlContent.replacingOccurrences(of: #"name\s*=\s*"[^"]*""#, with: "name = \"\(provider.name)\"", options: .regularExpression)
+        tomlContent = tomlContent.replacingOccurrences(of: #"base_url\s*=\s*"[^"]*""#, with: "base_url = \"\(provider.baseUrl)\"", options: .regularExpression)
+        try tomlContent.write(to: codexConfig, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Read helpers
