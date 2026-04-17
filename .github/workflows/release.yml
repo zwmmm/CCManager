@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 env:
-  XCODE_VERSION: '26.4'
+  XCODE_VERSION: '26.0'
   SCHEME: 'CCManager'
   PROJECT: 'CCManager.xcodeproj'
 
