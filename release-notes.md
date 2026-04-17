@@ -1,9 +1,7 @@
-### Features
+### Bug Fixes
 
-- Improve Codex configuration writing to merge with existing config files
-- Add ad-hoc re-signing script for embedded frameworks and binaries
+- Use repository URL for sparkle:releaseNotesLink instead of release asset URL
 
 ### Others
 
-- Remove GitHub Actions release workflow (replaced by local release process)
-- Update app-release skill documentation
+- Add Sparkle key generation instructions to app-release skill

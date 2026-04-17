@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.1] - 2026-04-17
+
+### Bug Fixes
+
+- Use repository URL for sparkle:releaseNotesLink instead of release asset URL
+
+### Others
+
+- Add Sparkle key generation instructions to app-release skill
+
 ## [1.4.0] - 2026-04-17
 
 ### Features
