@@ -12,7 +12,7 @@ description: 使用本 skill 发布 macOS 应用。自动构建、生成 appcast
 - 项目使用 XcodeGen，版本信息存储在 `project.yml` 的 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`
 - 项目根目录存在 `CHANGELOG.md`、`release-notes.md` 和 `docs/appcast.xml`
 - Git 仓库已有至少一个 tag（作为上一个版本基准）
-- Sparkle 私钥已配置在 `~/.config/CCManager/sparkle_ed25519`（EdDSA 私钥文件）
+- Sparkle 私钥已配置在 `~/.config/CCManager/sparkle_ed25519`（EdDSA 私钥文件，可通过 `generate_keys -x` 生成）
 - `gh` CLI 已登录并有 repo 权限
 - 本地需要安装 XcodeGen
 - 需要确保没有未提交的更改
@@ -223,4 +223,19 @@ gh release view vX.Y.Z
 - 如果工作区不干净 → 先 `git stash` 或让用户确认已提交
 - 如果没有找到上一个 tag → 提示用户指定基准 tag
 - 如果推送失败 → 检查远程是否已存在该 tag
-- 如果 Sparkle 私钥不存在 → 提示配置 `~/.config/CCManager/sparkle_ed25519`
+- 如果 Sparkle 私钥不存在 → 使用 `generate_keys -x ~/.config/CCManager/sparkle_ed25519` 生成
+
+## 生成 Sparkle 私钥
+
+如果私钥文件不存在，可以从 Sparkle 包中提取 `generate_keys` 工具生成：
+
+```bash
+# 下载 Sparkle 并生成私钥
+SPARKLE_VERSION="2.6.0"
+curl -L -o /tmp/sparkle.tar.xz "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+tar -xf /tmp/sparkle.tar.xz -C /tmp
+mkdir -p ~/.config/CCManager
+/tmp/bin/generate_keys -x ~/.config/CCManager/sparkle_ed25519
+```
+
+生成的公钥需要配置到 `Resources/Info.plist` 的 `SUPublicEDKey` 字段。
