@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.2] - 2026-04-17
+
+### Others
+
+- Configure code signing settings
+
 ## [1.3.1] - 2026-04-17
 
 ### Others
