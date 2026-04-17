@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.7] - 2026-04-17
+
+### Others
+
+- Add Xcode scheme configuration for proper platform resolution
+
 ## [1.3.6] - 2026-04-17
 
 ### Others
