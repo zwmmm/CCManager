@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.4] - 2026-04-17
+
+### Others
+
+- Update standard Swift/Xcode gitignore rules and remove user-specific xcuserdata files from tracking
+
 ## [1.3.3] - 2026-04-17
 
 ### Others
