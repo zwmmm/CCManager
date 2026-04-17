@@ -43,6 +43,7 @@ jobs:
             -project ${{ env.PROJECT }} \
             -scheme ${{ env.SCHEME }} \
             -configuration Release \
+            -destination "platform=macOS,arch=arm64" \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="${{ secrets.APPLE_SIGNING_IDENTITY }}" \
             CODE_SIGN_STYLE=Manual \
