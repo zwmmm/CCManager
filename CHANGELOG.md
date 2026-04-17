@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.6] - 2026-04-17
+
+### Others
+
+- Fix CI build by specifying macOS destination platform
+
 ## [1.3.5] - 2026-04-17
 
 ### Others
