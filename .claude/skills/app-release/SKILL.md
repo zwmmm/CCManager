@@ -13,6 +13,7 @@ description: 使用本 skill 发布 macOS 应用。自动构建、生成 appcast
 - 项目根目录存在 `CHANGELOG.md`、`release-notes.md` 和 `docs/appcast.xml`
 - Git 仓库已有至少一个 tag（作为上一个版本基准）
 - Sparkle 私钥已配置在 `~/.config/CCManager/sparkle_ed25519`（EdDSA 私钥文件，可通过 `generate_keys -x` 生成）
+- GitHub Secrets 中配置了 `SPARKLE_PRIVATE_KEY`（与本地私钥内容相同）
 - `gh` CLI 已登录并有 repo 权限
 - 本地需要安装 XcodeGen
 - 需要确保没有未提交的更改

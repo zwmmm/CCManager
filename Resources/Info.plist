@@ -32,7 +32,7 @@
     <key>SUFeedURL</key>
     <string>https://github.com/zwmmm/CCManager/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
-    <string>Yema8RsV8OzTEQZk9WIU0UllriwHY08uPLlQDikHSsQ=</string>
+    <string>EJllfUC6CU6xOGKPM8/3T8TdfsAWvXLNocBaG7Lhsyc=</string>
     <key>SUEnableAutomaticChecks</key>
     <true/>
     <key>SUScheduledCheckInterval</key>
