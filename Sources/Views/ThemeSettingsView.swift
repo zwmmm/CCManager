@@ -362,16 +362,11 @@ struct ThemeSettingsView: View {
 
     // MARK: - CLI Section
     private var cliSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Install CLI to PATH")
-                        .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    Text(cliInstaller.isInstalled ? "ccmanager is available in terminal" : "ccmanager command will be available globally")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(cliInstaller.isInstalled ? themeManager.brandColor : .secondary)
-                }
+                Text("CLI PATH")
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.primary)
 
                 Spacer()
 
