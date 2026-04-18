@@ -10,7 +10,7 @@ struct ThemeSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showEditorPicker = false
-    @State private var selectedCategory: ChineseColor.ColorCategory = .green
+    @State private var selectedCategory: ChineseColor.ColorCategory = .group0
 
     // MARK: - Design Tokens
     private let horizontalPadding: CGFloat = 18
@@ -356,6 +356,7 @@ struct ThemeSettingsView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
+            .tint(themeManager.brandColor)
         }
         .padding(.vertical, 8)
     }
