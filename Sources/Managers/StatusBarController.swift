@@ -407,7 +407,7 @@ struct ProviderMenuRowView: View {
             CachedPixelAvatarView(
                 name: provider.name,
                 type: provider.type,
-                size: 24
+                size: 28
             )
 
             VStack(alignment: .leading, spacing: 2) {

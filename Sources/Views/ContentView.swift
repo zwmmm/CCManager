@@ -185,7 +185,7 @@ struct SidebarView: View {
         let isSelected = selectedProviderId == provider.id
 
         HStack(spacing: 10) {
-            PixelAvatarView(name: provider.name, type: provider.type, size: 24)
+            PixelAvatarView(name: provider.name, type: provider.type, size: 28)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(provider.name)
@@ -295,7 +295,7 @@ struct ProviderDetailView: View {
             VStack(spacing: 20) {
                 // Header Card
                 VStack(spacing: 14) {
-                    PixelAvatarView(name: provider.name, type: provider.type, size: 64)
+                    PixelAvatarView(name: provider.name, type: provider.type, size: 72)
 
                     VStack(spacing: 6) {
                         Text(provider.name)
