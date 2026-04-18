@@ -2,7 +2,7 @@ import Foundation
 import AppKit
 
 /// Manages CLI installation to system PATH
-/// Handles symlink creation in /usr/local/bin and PATH configuration
+/// Downloads CLI from GitHub releases and installs to /usr/local/bin
 final class CLIInstallationManager: ObservableObject {
     static let shared = CLIInstallationManager()
 
@@ -51,45 +51,35 @@ final class CLIInstallationManager: ObservableObject {
         }
     }
 
-    /// Install CLI to PATH by creating symlink in /usr/local/bin/
+    /// Install CLI to PATH by downloading from GitHub
     func installCLI() async -> Bool {
         guard !isInstalling else { return false }
 
         await MainActor.run {
             isInstalling = true
-            installStatus = "Installing..."
+            installStatus = "Downloading..."
         }
 
         do {
-            // 1. Find the CLI binary inside the app bundle
-            guard let cliPath = findCLIBinary() else {
-                await MainActor.run {
-                    installStatus = "Error: CLI binary not found in app bundle"
-                    isInstalling = false
-                }
-                return false
+            // 1. Download CLI binary from GitHub releases
+            let cliUrl = "https://github.com/zwmmm/CCManager/releases/latest/download/ccmanager"
+            guard let url = URL(string: cliUrl) else {
+                throw NSError(domain: "CLIInstallationManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
 
-            // 2. Check if /usr/local/bin exists, create if needed
-            let fileManager = FileManager.default
-            let targetDir = URL(fileURLWithPath: "/usr/local/bin")
+            let (tempURL, response) = try await URLSession.shared.download(from: url)
 
-            if !fileManager.fileExists(atPath: targetDir.path) {
-                try fileManager.createDirectory(at: targetDir, withIntermediateDirectories: true)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                throw NSError(domain: "CLIInstallationManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Download failed"])
             }
 
-            // 3. Remove existing symlink if present
-            if fileManager.fileExists(atPath: targetPath) {
-                try fileManager.removeItem(atPath: targetPath)
-            }
+            // 2. Make it executable
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempURL.path)
 
-            // 4. Create symlink (requires admin privileges via macOS prompt)
-            try fileManager.createSymbolicLink(
-                atPath: targetPath,
-                withDestinationPath: cliPath
-            )
+            // 3. Install to /usr/local/bin with admin privileges
+            try installBinaryWithAdminPrivileges(from: tempURL.path, to: targetPath)
 
-            // 5. Make sure /usr/local/bin is in PATH (check shell config)
+            // 4. Make sure /usr/local/bin is in PATH
             try ensurePathInShellConfig(path: "/usr/local/bin")
 
             await MainActor.run {
@@ -121,7 +111,7 @@ final class CLIInstallationManager: ObservableObject {
             let fileManager = FileManager.default
 
             if fileManager.fileExists(atPath: targetPath) {
-                try fileManager.removeItem(atPath: targetPath)
+                try removeSymlinkWithAdminPrivileges(at: targetPath)
             }
 
             await MainActor.run {
@@ -140,41 +130,54 @@ final class CLIInstallationManager: ObservableObject {
         }
     }
 
-    /// Get the path to CLI binary inside the app bundle
-    /// Path: CCManager.app/Contents/MacOS/ccmanager (from Xcode build) or in Resources
-    private func findCLIBinary() -> String? {
-        let fileManager = FileManager.default
+    /// Install binary file using osascript to request admin privileges
+    private func installBinaryWithAdminPrivileges(from sourcePath: String, to targetPath: String) throws {
+        let script = """
+        do shell script "cp '\(sourcePath)' '\(targetPath)' && chmod +x '\(targetPath)'" with administrator privileges
+        """
 
-        // Try multiple possible locations
-        let possiblePaths = [
-            // Built product (Xcode builds CLI into this location inside app bundle)
-            Bundle.main.bundlePath + "/Contents/MacOS/ccmanager",
-            // Resources folder
-            Bundle.main.bundlePath + "/Contents/Resources/ccmanager",
-            // macOS binary location
-            Bundle.main.bundlePath + "/Contents/MacOS/ccmanager",
-        ]
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
 
-        for path in possiblePaths {
-            if fileManager.fileExists(atPath: path) {
-                return path
-            }
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        try process.run()
+        process.waitUntilExit()
+
+        let exitCode = process.terminationStatus
+        if exitCode != 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let errorMessage = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
+            throw NSError(domain: "CLIInstallationManager", code: Int(exitCode), userInfo: [NSLocalizedDescriptionKey: errorMessage])
         }
+    }
 
-        // If not found in bundle, fall back to DerivedData build product
-        // This is useful during development
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser
-        let derivedDataPath = homeDir
-            .appendingPathComponent("Library/Developer/Xcode/DerivedData")
-            .appendingPathComponent("CCManager-hdwlixpvplobhihghnnyvqzfrxaa")
-            .appendingPathComponent("Build/Products/Debug/ccmanager")
-            .path
+    /// Remove symlink using osascript to request admin privileges
+    private func removeSymlinkWithAdminPrivileges(at path: String) throws {
+        let script = """
+        do shell script "rm '\(path)'" with administrator privileges
+        """
 
-        if fileManager.fileExists(atPath: derivedDataPath) {
-            return derivedDataPath
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        try process.run()
+        process.waitUntilExit()
+
+        let exitCode = process.terminationStatus
+        if exitCode != 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let errorMessage = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown error"
+            throw NSError(domain: "CLIInstallationManager", code: Int(exitCode), userInfo: [NSLocalizedDescriptionKey: errorMessage])
         }
-
-        return nil
     }
 
     /// Ensure a path is in shell config (~/.zshrc)
