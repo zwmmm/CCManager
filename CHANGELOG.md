@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0] - 2026-04-18
+
+### Features
+
+- Add status bar interaction, hover effects and auto-select provider for avatars
+
+### Bug Fixes
+
+- Adjust avatar size from 24/64 to 28/72
+
+### Others
+
+- Refactor avatar rendering to use DiceBear API instead of pixel generation
+
 ## [1.5.1] - 2026-04-18
 
 ### Others

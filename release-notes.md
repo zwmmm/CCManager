@@ -1,3 +1,11 @@
+### Features
+
+- Add status bar interaction, hover effects and auto-select provider for avatars
+
+### Bug Fixes
+
+- Adjust avatar size from 24/64 to 28/72
+
 ### Others
 
-- Restore app-release skill and GitHub Actions workflow for automated releases
+- Refactor avatar rendering to use DiceBear API instead of pixel generation
