@@ -1,6 +1,8 @@
 import Foundation
 import SQLite
 
+/// ProviderStore for GUI - wraps Database and adds ObservableObject support.
+/// Uses Database.shared for actual storage operations (code reuse with CLI).
 final class ProviderStore: ObservableObject {
     static let shared = ProviderStore()
 
@@ -9,171 +11,51 @@ final class ProviderStore: ObservableObject {
     @Published var importProgress: Double? = nil
     @Published var exportProgress: Double? = nil
 
-    private var db: Connection?
-    private let dbQueue = DispatchQueue(label: "com.ccmanager.database")
-
-    // Table definition
-    private let providersTable = Table("providers")
-    private let idColumn = Expression<String>("id")
-    private let nameColumn = Expression<String>("name")
-    private let typeColumn = Expression<String>("type")
-    private let apiKeyColumn = Expression<String>("api_key")
-    private let baseUrlColumn = Expression<String>("base_url")
-    private let modelColumn = Expression<String?>("model")
-    private let isActiveColumn = Expression<Bool>("is_active")
-    private let sortOrderColumn = Expression<Int>("sort_order")
+    private let database = Database.shared
 
     private init() {
-        setupDatabase()
         loadProviders()
     }
 
-    private func setupDatabase() {
-        do {
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            let appFolder = appSupport.appendingPathComponent("CCManager", isDirectory: true)
-            try FileManager.default.createDirectory(at: appFolder, withIntermediateDirectories: true)
-            let dbPath = appFolder.appendingPathComponent("providers.sqlite").path
-
-            db = try Connection(dbPath)
-            try createTable()
-        } catch {
-            print("Database setup error: \(error)")
-        }
-    }
-
-    private func createTable() throws {
-        try db?.run(providersTable.create(ifNotExists: true) { t in
-            t.column(idColumn, primaryKey: true)
-            t.column(nameColumn)
-            t.column(typeColumn)
-            t.column(apiKeyColumn)
-            t.column(baseUrlColumn)
-            t.column(modelColumn)
-            t.column(isActiveColumn, defaultValue: false)
-            t.column(sortOrderColumn, defaultValue: 0)
-        })
-        // 迁移：检查列是否存在再添加（避免每次启动报错）
-        if let stmt = try db?.prepare("PRAGMA table_info(providers)") {
-            var hasModel = false
-            for row in stmt {
-                // PRAGMA table_info returns: cid, name, type, notnull, dflt_value, pk
-                // Column 1 is "name"
-                if let nameCol = row[1] as? String, nameCol == "model" {
-                    hasModel = true
-                    break
-                }
-            }
-            if !hasModel {
-                try db?.run(providersTable.addColumn(modelColumn))
-            }
-        }
-    }
-
     func loadProviders() {
-        dbQueue.sync {
-            guard let db = db else { return }
-            do {
-                var loadedProviders: [Provider] = []
-                for row in try db.prepare(providersTable.order(sortOrderColumn.asc)) {
-                    let provider = Provider(
-                        id: UUID(uuidString: row[idColumn]) ?? UUID(),
-                        name: row[nameColumn],
-                        type: ProviderType(rawValue: row[typeColumn]) ?? .claudeCode,
-                        apiKey: row[apiKeyColumn],
-                        baseUrl: row[baseUrlColumn],
-                        model: row[modelColumn],
-                        isActive: row[isActiveColumn],
-                        sortOrder: row[sortOrderColumn]
-                    )
-                    loadedProviders.append(provider)
-                }
-                DispatchQueue.main.async {
-                    self.providers = loadedProviders
-                    self.activeProvider = loadedProviders.first { $0.isActive }
-                }
-            } catch {
-                print("Load providers error: \(error)")
-            }
-        }
+        let loadedProviders = database.loadAllProviders()
+        providers = loadedProviders
+        activeProvider = loadedProviders.first { $0.isActive }
     }
 
     func addProvider(_ provider: Provider) {
-        dbQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
-            do {
-                try db.run(self.providersTable.insert(
-                    self.idColumn <- provider.id.uuidString,
-                    self.nameColumn <- provider.name,
-                    self.typeColumn <- provider.type.rawValue,
-                    self.apiKeyColumn <- provider.apiKey,
-                    self.baseUrlColumn <- provider.baseUrl,
-                    self.modelColumn <- provider.model,
-                    self.isActiveColumn <- provider.isActive,
-                    self.sortOrderColumn <- provider.sortOrder
-                ))
-                DispatchQueue.main.async {
-                    self.loadProviders()
-                }
-            } catch {
-                print("Add provider error: \(error)")
-            }
+        do {
+            try database.addProvider(provider)
+            loadProviders()
+        } catch {
+            print("Add provider error: \(error)")
         }
     }
 
     func updateProvider(_ provider: Provider) {
-        dbQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
-            do {
-                let row = self.providersTable.filter(self.idColumn == provider.id.uuidString)
-                try db.run(row.update(
-                    self.nameColumn <- provider.name,
-                    self.typeColumn <- provider.type.rawValue,
-                    self.apiKeyColumn <- provider.apiKey,
-                    self.baseUrlColumn <- provider.baseUrl,
-                    self.modelColumn <- provider.model,
-                    self.isActiveColumn <- provider.isActive,
-                    self.sortOrderColumn <- provider.sortOrder
-                ))
-                DispatchQueue.main.async {
-                    self.loadProviders()
-                }
-            } catch {
-                print("Update provider error: \(error)")
-            }
+        do {
+            try database.updateProvider(provider)
+            loadProviders()
+        } catch {
+            print("Update provider error: \(error)")
         }
     }
 
     func deleteProvider(_ provider: Provider) {
-        dbQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
-            do {
-                let row = self.providersTable.filter(self.idColumn == provider.id.uuidString)
-                try db.run(row.delete())
-                DispatchQueue.main.async {
-                    self.loadProviders()
-                }
-            } catch {
-                print("Delete provider error: \(error)")
-            }
+        do {
+            try database.deleteProvider(id: provider.id)
+            loadProviders()
+        } catch {
+            print("Delete provider error: \(error)")
         }
     }
 
     func setActiveProvider(_ provider: Provider) {
-        dbQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
-            do {
-                // Deactivate all providers of the same type
-                try db.run(self.providersTable.filter(self.typeColumn == provider.type.rawValue).update(self.isActiveColumn <- false))
-                // Activate selected
-                let row = self.providersTable.filter(self.idColumn == provider.id.uuidString)
-                try db.run(row.update(self.isActiveColumn <- true))
-                DispatchQueue.main.async {
-                    self.loadProviders()
-                }
-            } catch {
-                print("Set active provider error: \(error)")
-            }
+        do {
+            try database.setActiveProvider(id: provider.id, type: provider.type)
+            loadProviders()
+        } catch {
+            print("Set active provider error: \(error)")
         }
     }
 
@@ -181,20 +63,16 @@ final class ProviderStore: ObservableObject {
         var reorderedProviders = providers
         reorderedProviders.move(fromOffsets: source, toOffset: destination)
 
-        dbQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
+        for (index, provider) in reorderedProviders.enumerated() {
+            var updated = provider
+            updated.sortOrder = index
             do {
-                for (index, provider) in reorderedProviders.enumerated() {
-                    let row = self.providersTable.filter(self.idColumn == provider.id.uuidString)
-                    try db.run(row.update(self.sortOrderColumn <- index))
-                }
-                DispatchQueue.main.async {
-                    self.loadProviders()
-                }
+                try database.updateProvider(updated)
             } catch {
                 print("Move provider error: \(error)")
             }
         }
+        loadProviders()
     }
 
     // MARK: - Import/Export
@@ -218,5 +96,11 @@ final class ProviderStore: ObservableObject {
         }
 
         return imported.count
+    }
+
+    // MARK: - CLI Test Support
+
+    func testProvider(_ provider: Provider) async -> TestResult {
+        return await ProviderTester.shared.test(provider: provider)
     }
 }

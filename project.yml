@@ -33,7 +33,11 @@ targets:
     type: application
     platform: macOS
     sources:
-      - Sources
+      - path: Sources
+        excludes:
+          - CCManagerCLI/**
+      - path: Sources/Shared
+        buildPhase: sources
       - path: Resources/MingcuteClaudeFill.png
         buildPhase: resources
       - Resources/Assets.xcassets
@@ -54,8 +58,28 @@ targets:
       - package: Down
         product: Down
 
+  CCManagerCLI:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Sources/CCManagerCLI
+      - path: Sources/Shared
+      - path: Sources/Models
+    settings:
+      base:
+        PRODUCT_NAME: ccmanager
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+        ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - package: SQLite
+        product: SQLite
+
 schemes:
   CCManager:
     build:
       targets:
         CCManager: all
+  CCManagerCLI:
+    build:
+      targets:
+        CCManagerCLI: all
