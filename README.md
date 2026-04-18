@@ -40,6 +40,9 @@ CCManager 的核心理念很简单：
 内置多个常用预设，开箱即用！
 
 ### ⚡ 一键切换
+
+<img width="306" height="426" alt="image" src="https://github.com/user-attachments/assets/d862a91a-0077-423f-ae79-e0dfa92f37a0" />
+
 菜单栏一点，立即切换当前激活的 Provider ✨
 
 CCManager 自动将配置写入 `~/.claude/settings.json`（Claude Code）或 `~/.codex/config.toml`（Codex），**无需手动改文件**。
