@@ -14,6 +14,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMainMenu()
         statusBarController = StatusBarController()
 
+        if #available(macOS 13.0, *) {
+            LaunchAtLoginManager.shared.bootstrapDefaultPreference()
+        }
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleRestoreMainWindow),

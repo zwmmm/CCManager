@@ -11,12 +11,16 @@ struct ThemeSettingsView: View {
     @State private var showEditorPicker = false
     @State private var selectedCategory: ChineseColor.ColorCategory = .green
 
+    // MARK: - Design Tokens
+    private let horizontalPadding: CGFloat = 18
+    private let sectionGap: CGFloat = 0
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
                 Text("SETTINGS")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(.secondary)
 
                 Spacer()
@@ -25,18 +29,19 @@ struct ThemeSettingsView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
             }
-            .padding(18)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, 14)
 
             Divider()
 
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: sectionGap) {
                     // Appearance
                     sectionHeader("APPEARANCE")
 
@@ -48,97 +53,60 @@ struct ThemeSettingsView: View {
                     .padding(4)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 14)
 
                     Divider()
-                        .padding(.horizontal, 18)
+                        .padding(.horizontal, horizontalPadding)
 
                     // Theme Color
                     sectionHeader("THEME COLOR")
 
                     colorPickerGrid
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 18)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
 
                     Divider()
-                        .padding(.horizontal, 18)
+                        .padding(.horizontal, horizontalPadding)
 
                     // Editor
                     sectionHeader("EDITOR")
 
-                    // Editor select trigger
-                    Button {
-                        showEditorPicker.toggle()
-                    } label: {
-                        HStack(spacing: 10) {
-                            if let selected = editorManager.selectedEditor,
-                               let icon = editorManager.icon(for: selected.bundleId) {
-                                Image(nsImage: icon)
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                                Text(selected.displayName)
-                                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(.primary)
-                            } else {
-                                Image(systemName: "curlybraces")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 20)
-                                Text("Select editor...")
-                                    .font(.system(size: 13, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 9)
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(showEditorPicker ? themeManager.brandColor.opacity(0.6) : Color.clear, lineWidth: 1)
-                        )
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 12)
-                    .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
-                        EditorPickerPopover(editorManager: editorManager) {
-                            showEditorPicker = false
-                        }
-                    }
+                    editorSection
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
 
                     Divider()
-                        .padding(.horizontal, 18)
+                        .padding(.horizontal, horizontalPadding)
 
                     // Data Management
                     sectionHeader("DATA MANAGEMENT")
 
                     dataManagementSection
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 18)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
 
                     Divider()
-                        .padding(.horizontal, 18)
+                        .padding(.horizontal, horizontalPadding)
+
+                    // Launch at Login
+                    sectionHeader("LAUNCH AT LOGIN")
+
+                    launchAtLoginSection
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
+
+                    Divider()
+                        .padding(.horizontal, horizontalPadding)
 
                     // About
                     sectionHeader("ABOUT")
 
                     aboutSection
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 18)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
                 }
             }
-
-            Spacer()
 
             Divider()
 
@@ -149,13 +117,64 @@ struct ThemeSettingsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(themeManager.brandColor)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, 12)
             }
-            .padding(18)
         }
-        .frame(width: 340, height: 480)
+        .frame(width: 340)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
+    // MARK: - Editor Section
+    private var editorSection: some View {
+        Button {
+            showEditorPicker.toggle()
+        } label: {
+            HStack(spacing: 10) {
+                if let selected = editorManager.selectedEditor,
+                   let icon = editorManager.icon(for: selected.bundleId) {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                    Text(selected.displayName)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.primary)
+                } else {
+                    Image(systemName: "curlybraces")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20)
+                    Text("Select editor...")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(showEditorPicker ? themeManager.brandColor.opacity(0.6) : Color.clear, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
+            EditorPickerPopover(editorManager: editorManager) {
+                showEditorPicker = false
+            }
+        }
+    }
+
+    // MARK: - Color Picker Grid
     private var colorPickerGrid: some View {
         VStack(spacing: 8) {
             // Category picker
@@ -233,6 +252,7 @@ struct ThemeSettingsView: View {
         .help("\(color.name) (\(color.hex))")
     }
 
+    // MARK: - Section Header
     private func sectionHeader(_ title: String) -> some View {
         HStack {
             Text(title)
@@ -240,11 +260,12 @@ struct ThemeSettingsView: View {
                 .foregroundStyle(.secondary)
             Spacer()
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, horizontalPadding)
         .padding(.top, 16)
         .padding(.bottom, 10)
     }
 
+    // MARK: - Theme Option
     private func themeOption(_ label: String, value: String, icon: String) -> some View {
         let isSelected = themeManager.themePreference == value
 
@@ -269,6 +290,7 @@ struct ThemeSettingsView: View {
         .foregroundStyle(isSelected ? themeManager.brandColor : .primary)
     }
 
+    // MARK: - Data Management Section
     private var dataManagementSection: some View {
         HStack(spacing: 8) {
             Button {
@@ -307,6 +329,27 @@ struct ThemeSettingsView: View {
         }
     }
 
+    // MARK: - Launch at Login Section
+    @available(macOS 13.0, *)
+    private var launchAtLoginSection: some View {
+        HStack {
+            Text("Launch at Login")
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Toggle("", isOn: Binding(
+                get: { LaunchAtLoginManager.shared.isEnabled },
+                set: { LaunchAtLoginManager.shared.setEnabled($0) }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+        }
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - About Section
     private var aboutSection: some View {
         HStack(spacing: 0) {
             // Version info
@@ -316,6 +359,7 @@ struct ThemeSettingsView: View {
                     .foregroundStyle(.secondary)
                 Text(updateManager.currentVersion)
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.primary)
             }
 
             Spacer()
@@ -342,6 +386,7 @@ struct ThemeSettingsView: View {
         }
     }
 
+    // MARK: - Actions
     private func exportProviders() {
         let panel = NSSavePanel()
         panel.title = "Export Providers"
