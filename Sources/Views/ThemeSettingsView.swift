@@ -6,6 +6,7 @@ struct ThemeSettingsView: View {
     @EnvironmentObject var editorManager: EditorManager
     @EnvironmentObject var providerStore: ProviderStore
     @EnvironmentObject var updateManager: UpdateManager
+    @EnvironmentObject var cliInstaller: CLIInstallationManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var showEditorPicker = false
@@ -93,6 +94,16 @@ struct ThemeSettingsView: View {
                     sectionHeader("LAUNCH AT LOGIN")
 
                     launchAtLoginSection
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
+
+                    Divider()
+                        .padding(.horizontal, horizontalPadding)
+
+                    // CLI Installation
+                    sectionHeader("CLI")
+
+                    cliSection
                         .padding(.horizontal, horizontalPadding)
                         .padding(.bottom, 14)
 
@@ -345,6 +356,53 @@ struct ThemeSettingsView: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
+        }
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - CLI Section
+    private var cliSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Install CLI to PATH")
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.primary)
+                    Text(cliInstaller.isInstalled ? "ccmanager is available in terminal" : "ccmanager command will be available globally")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(cliInstaller.isInstalled ? themeManager.brandColor : .secondary)
+                }
+
+                Spacer()
+
+                if cliInstaller.isInstalling {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .frame(width: 20, height: 20)
+                } else {
+                    Button {
+                        Task {
+                            if cliInstaller.isInstalled {
+                                _ = await cliInstaller.uninstallCLI()
+                            } else {
+                                _ = await cliInstaller.installCLI()
+                            }
+                        }
+                    } label: {
+                        Text(cliInstaller.isInstalled ? "Remove" : "Install")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(cliInstaller.isInstalled ? .red : themeManager.brandColor)
+                }
+            }
+
+            if !cliInstaller.installStatus.isEmpty {
+                Text(cliInstaller.installStatus)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
         }
         .padding(.vertical, 8)
     }

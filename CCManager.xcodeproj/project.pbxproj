@@ -13,6 +13,7 @@
 		150155C6D4D49A3BE04790D3 /* PixelAvatarCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */; };
 		228B2B5533FA4B35A93BFE40 /* EditorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C59CDE979907DB909860DF /* EditorManager.swift */; };
 		35D88A935AE74D78298A5487 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129EC2323C4B2F104B519350 /* Database.swift */; };
+		3B863D9FCDD75F2592348A49 /* CLIInstallationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */; };
 		40CCC4DE2F2A71E538DE85D6 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */; };
 		4FE5220BBD51F5DFF497D6BD /* ProviderFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BABCAFBE8308830BF833121 /* ProviderFormView.swift */; };
 		582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1337C4E3B6B34325B2491F3B /* AppDelegate.swift */; };
@@ -49,6 +50,7 @@
 		1337C4E3B6B34325B2491F3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarCache.swift; sourceTree = "<group>"; };
 		3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
+		3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIInstallationManager.swift; sourceTree = "<group>"; };
 		3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateWindowController.swift; sourceTree = "<group>"; };
 		47E81B53F3350B368B416052 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MingcuteClaudeFill.png; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 		CFF4AA2B54F2D8299BE03816 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */,
 				69C59CDE979907DB909860DF /* EditorManager.swift */,
 				CF5168D0E333680BDBD6307C /* LaunchAtLoginManager.swift */,
 				BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */,
@@ -323,6 +326,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */,
+				3B863D9FCDD75F2592348A49 /* CLIInstallationManager.swift in Sources */,
 				7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */,
 				C3325CBB7F766C604B8A475D /* ConfigWriter.swift in Sources */,
 				877C06474BF152A5D5F12A99 /* ContentView.swift in Sources */,

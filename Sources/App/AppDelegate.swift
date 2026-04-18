@@ -30,6 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(ThemeManager.shared)
             .environmentObject(EditorManager.shared)
             .environmentObject(UpdateManager.shared)
+            .environmentObject(CLIInstallationManager.shared)
 
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 500),
