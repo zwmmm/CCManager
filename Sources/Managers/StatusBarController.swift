@@ -29,8 +29,28 @@ final class StatusBarController: ObservableObject {
             } else {
                 button.image = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: "CC Manager")
             }
-            button.action = #selector(togglePanel)
+            button.action = #selector(handleStatusBarClick)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.target = self
+        }
+    }
+
+    @objc private func handleStatusBarClick(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+
+        if event.type == .rightMouseUp {
+            // Right click: toggle panel
+            if isPanelVisible {
+                hidePanel()
+            } else {
+                showPanel()
+            }
+        } else {
+            // Left click: show main window
+            hidePanel()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                NotificationCenter.default.post(name: .restoreMainWindow, object: nil)
+            }
         }
     }
 
@@ -47,7 +67,13 @@ final class StatusBarController: ObservableObject {
                 }
             },
             onQuit: {
-                NSApp.terminate(nil)
+                NSApp.stopModal()
+                for window in NSApp.windows {
+                    window.close()
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    exit(0)
+                }
             },
             onPanelHidden: { [weak self] in
                 self?.isPanelVisible = false
@@ -374,6 +400,8 @@ struct ProviderMenuRowView: View {
 
     @EnvironmentObject var themeManager: ThemeManager
 
+    @State private var isHovered = false
+
     var body: some View {
         HStack(spacing: 12) {
             CachedPixelAvatarView(
@@ -409,12 +437,16 @@ struct ProviderMenuRowView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isActive ? themeManager.brandColor.opacity(0.1) : Color.clear)
+        .background(isActive ? themeManager.brandColor.opacity(0.1) : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
         .contentShape(Rectangle())
-        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .scaleEffect(isPressed ? 0.97 : (isHovered ? 1.01 : 1.0))
         .animation(.easeOut(duration: 0.12), value: isPressed)
+        .animation(.easeOut(duration: 0.15), value: isHovered)
         .onTapGesture {
             onTap()
+        }
+        .onHover { hovering in
+            isHovered = hovering
         }
     }
 }

@@ -33,6 +33,16 @@ struct ContentView: View {
         }
         .preferredColorScheme(themeManager.colorScheme)
         .accentColor(themeManager.brandColor)
+        .onAppear {
+            if selectedProviderId == nil, let first = providerStore.providers.first {
+                selectedProviderId = first.id
+            }
+        }
+        .onChange(of: providerStore.providers) { providers in
+            if selectedProviderId == nil, let first = providers.first {
+                selectedProviderId = first.id
+            }
+        }
         .onChange(of: updateManager.updateInstalled) { installed in
             if installed {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
