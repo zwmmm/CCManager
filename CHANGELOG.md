@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2026-04-18
+
+### Features
+
+- Add macOS auto-start functionality
+
+### Others
+
+- Add research document for auto-start feature
+
 ## [1.4.1] - 2026-04-17
 
 ### Bug Fixes

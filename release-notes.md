@@ -1,7 +1,7 @@
-### Bug Fixes
+### Features
 
-- Use repository URL for sparkle:releaseNotesLink instead of release asset URL
+- Add macOS auto-start functionality
 
 ### Others
 
-- Add Sparkle key generation instructions to app-release skill
+- Add research document for auto-start feature

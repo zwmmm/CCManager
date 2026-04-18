@@ -177,7 +177,6 @@
 				6DCE2914CD57D09D0436EBC5 /* Sources */,
 				D25A3CE3B661C3D5E620212F /* Resources */,
 				7C0D932B78AD78F366E49CDA /* Frameworks */,
-				5ACED937648EADCAD4B2A33F /* Re-sign embedded frameworks for ad-hoc signing */,
 			);
 			buildRules = (
 			);
@@ -242,27 +241,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		5ACED937648EADCAD4B2A33F /* Re-sign embedded frameworks for ad-hoc signing */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Re-sign embedded frameworks for ad-hoc signing";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set +e\nFRAMEWORKS_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Frameworks\"\nif [ -d \"$FRAMEWORKS_DIR\" ]; then\n  for framework in \"$FRAMEWORKS_DIR\"/*.framework; do\n    [ -d \"$framework\" ] || continue\n    codesign --force --sign - \"$framework\" 2>/dev/null\n    for binary in \"${framework}/Versions/\"*/*; do\n      [ -f \"$binary\" ] && codesign --force --sign - \"$binary\" 2>/dev/null\n    done\n  done\nfi\n# Re-sign binaries in MacOS directory (e.g., __preview.dylib from SwiftUI previews)\nMACOS_BIN_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/MacOS\"\nif [ -d \"$MACOS_BIN_DIR\" ]; then\n  for binary in \"$MACOS_BIN_DIR\"/*; do\n    [ -f \"$binary\" ] && codesign --force --sign - \"$binary\" 2>/dev/null\n  done\nfi\ncodesign --force --sign - \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6DCE2914CD57D09D0436EBC5 /* Sources */ = {
@@ -344,7 +322,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -364,7 +342,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -425,7 +403,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -439,7 +417,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = CCManager;
