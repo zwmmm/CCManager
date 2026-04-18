@@ -1,11 +1,11 @@
 ### Features
 
-- Add status bar interaction, hover effects and auto-select provider for avatars
-
-### Bug Fixes
-
-- Adjust avatar size from 24/64 to 28/72
+- Add CCManagerCLI as a standalone CLI tool with shared Database layer
+- Add CLI PATH installation feature in Settings UI
+- Simplify CLI settings UI text
+- Refactor CLI installation to download pre-built binaries from GitHub Releases
 
 ### Others
 
-- Refactor avatar rendering to use DiceBear API instead of pixel generation
+- Refactor color classification system for better maintainability
+- Add CCManagerCLI build step in CI pipeline
