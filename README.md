@@ -2,7 +2,8 @@
 
 macOS 菜单栏应用，管理多个 AI CLI Provider 的配置，一键切换。
 
-<img width="755" height="547" alt="image" src="https://github.com/user-attachments/assets/2e3b314a-e825-4c6a-93cf-043aaeb8b5e5" />
+<img width="755" height="547" alt="image" src="https://github.com/user-attachments/assets/233826c9-03b2-4d24-a235-53e6c9846791" />
+
 
 
 ## 功能特性
