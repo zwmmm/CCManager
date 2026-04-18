@@ -1,7 +1,3 @@
-### Features
-
-- Add macOS auto-start functionality
-
 ### Others
 
-- Add research document for auto-start feature
+- Restore app-release skill and GitHub Actions workflow for automated releases

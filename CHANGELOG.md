@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.1] - 2026-04-18
+
+### Others
+
+- Restore app-release skill and GitHub Actions workflow for automated releases
+
 ## [1.5.0] - 2026-04-18
 
 ### Features
