@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0] - 2026-04-19
+
+### Features
+
+- Add theme settings with customizable brand color (Chinese pigment palette) and system/light/dark theme mode
+- Add CollapsibleGroup and ListReorderPreview for provider list drag & group functionality
+
+### Others
+
+- Add CLAUDE.md and DESIGN.md documentation for codebase guidance
+- Update README with menu switch instructions
+
 ## [1.7.0] - 2026-04-18
 
 ### Features
