@@ -59,6 +59,7 @@ final class ConfigWriter {
         try fileManager.createDirectory(at: codexDir, withIntermediateDirectories: true)
 
         let model = provider.model ?? PresetProvider.defaultCodexModel
+        let providerKey = "ccmanager"  // fixed provider key
 
         // Write auth.json (merge with existing)
         let authUrl = codexDir.appendingPathComponent("auth.json")
@@ -68,12 +69,19 @@ final class ConfigWriter {
         let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
         try authData.write(to: authUrl, options: .atomic)
 
-        // Write config.toml (merge with existing)
-        var tomlContent = (try? String(contentsOf: codexConfig, encoding: .utf8)) ?? ""
-        tomlContent = tomlContent.replacingOccurrences(of: #"model\s*=\s*"[^"]*""#, with: "model = \"\(model)\"", options: .regularExpression)
-        tomlContent = tomlContent.replacingOccurrences(of: #"name\s*=\s*"[^"]*""#, with: "name = \"\(provider.name)\"", options: .regularExpression)
-        tomlContent = tomlContent.replacingOccurrences(of: #"base_url\s*=\s*"[^"]*""#, with: "base_url = \"\(provider.baseUrl)\"", options: .regularExpression)
-        try tomlContent.write(to: codexConfig, atomically: true, encoding: .utf8)
+        // Build new config content with model_providers section
+        let config = """
+        model_provider = "\(providerKey)"
+        model = "\(model)"
+
+        [model_providers.\(providerKey)]
+        name = "\(providerKey)"
+        base_url = "\(provider.baseUrl)"
+        wire_api = "responses"
+        requires_openai_auth = true
+        """
+
+        try config.write(to: codexConfig, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Read helpers
