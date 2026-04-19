@@ -77,21 +77,71 @@ struct ContentView: View {
 struct SidebarView: View {
     @EnvironmentObject var providerStore: ProviderStore
     @EnvironmentObject var themeManager: ThemeManager
+    @AppStorage("providerGroupCollapsed_claudeCode") private var isClaudeCodeCollapsed: Bool = false
+    @AppStorage("providerGroupCollapsed_codex") private var isCodexCollapsed: Bool = false
+
+    private var groupingEnabled: Bool {
+        themeManager.providerGroupingEnabled
+    }
     @Binding var selectedProviderId: UUID?
     @Binding var showingAddSheet: Bool
     let showingSettings: Binding<Bool>
     @Binding var editingProvider: Provider?
 
+    private var claudeCodeProviders: [Provider] {
+        providerStore.providers.filter { $0.type == .claudeCode }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    private var codexProviders: [Provider] {
+        providerStore.providers.filter { $0.type == .codex }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    @ViewBuilder
+    private func flatContentView() -> some View {
+        LazyVStack(spacing: 4) {
+            ForEach(providerStore.providers) { provider in
+                rowView(for: provider)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder
+    private func groupedContentView() -> some View {
+        LazyVStack(spacing: 0) {
+            CollapsibleGroup(
+                isExpanded: $isClaudeCodeCollapsed,
+                title: "Claude Code",
+                count: claudeCodeProviders.count
+            ) {
+                ForEach(claudeCodeProviders) { provider in
+                    rowView(for: provider)
+                }
+            }
+
+            CollapsibleGroup(
+                isExpanded: $isCodexCollapsed,
+                title: "Codex",
+                count: codexProviders.count
+            ) {
+                ForEach(codexProviders) { provider in
+                    rowView(for: provider)
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: 4) {
-                    ForEach(providerStore.providers) { provider in
-                        rowView(for: provider)
-                    }
+                if groupingEnabled {
+                    groupedContentView()
+                } else {
+                    flatContentView()
                 }
-                .padding(.horizontal, 8)
-                .padding(.top, 8)
             }
 
             // Footer with all buttons

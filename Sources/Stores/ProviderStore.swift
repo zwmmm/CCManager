@@ -59,20 +59,98 @@ final class ProviderStore: ObservableObject {
         }
     }
 
-    func moveProvider(from source: IndexSet, to destination: Int) {
-        var reorderedProviders = providers
-        reorderedProviders.move(fromOffsets: source, toOffset: destination)
+    // MARK: - Provider Access Helpers
 
-        for (index, provider) in reorderedProviders.enumerated() {
-            var updated = provider
-            updated.sortOrder = index
-            do {
-                try database.updateProvider(updated)
-            } catch {
-                print("Move provider error: \(error)")
+    func providers(ofType type: ProviderType) -> [Provider] {
+        providers.filter { $0.type == type }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    func moveProvider(from source: IndexSet, to destination: Int, inGroup groupType: ProviderType? = nil) {
+        if let groupType = groupType {
+            // 分组模式：只移动同 groupType 的 provider
+            var groupProviders = providers(ofType: groupType)
+            groupProviders.move(fromOffsets: source, toOffset: destination)
+
+            // Update sortOrder for moved providers (O(n) - using direct index lookup)
+            let movedIds = Set(source.map { groupProviders[$0] }.map { $0.id })
+            for (index, provider) in groupProviders.enumerated() {
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    providers[idx].sortOrder = index
+                }
+            }
+
+            // Write only affected providers to DB
+            for provider in groupProviders where movedIds.contains(provider.id) {
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    do {
+                        try database.updateProvider(providers[idx])
+                    } catch {
+                        print("Move provider error: \(error)")
+                    }
+                }
+            }
+        } else {
+            // 扁平模式：全量移动
+            var reorderedProviders = providers
+            reorderedProviders.move(fromOffsets: source, toOffset: destination)
+
+            // Update sortOrder for all (O(n) - reorderedProviders order matches providers index)
+            let movedIds = Set(source.map { reorderedProviders[$0] }.map { $0.id })
+            for (index, provider) in reorderedProviders.enumerated() {
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    providers[idx].sortOrder = index
+                }
+            }
+
+            // Write only affected providers to DB
+            for provider in reorderedProviders where movedIds.contains(provider.id) {
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    do {
+                        try database.updateProvider(providers[idx])
+                    } catch {
+                        print("Move provider error: \(error)")
+                    }
+                }
             }
         }
-        loadProviders()
+
+        objectWillChange.send()
+    }
+
+    func reassignSortOrderOnGroupingEnabled() {
+        var claudeCodeOrder = 0
+        var codexOrder = 0
+
+        // Single pass: update sortOrder and track affected providers
+        var affectedProviders: [Provider] = []
+
+        for provider in providers.sorted(by: { $0.sortOrder < $1.sortOrder }) {
+            switch provider.type {
+            case .claudeCode:
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    providers[idx].sortOrder = claudeCodeOrder
+                    affectedProviders.append(providers[idx])
+                    claudeCodeOrder += 1
+                }
+            case .codex:
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    providers[idx].sortOrder = codexOrder
+                    affectedProviders.append(providers[idx])
+                    codexOrder += 1
+                }
+            }
+        }
+
+        // Write only affected providers to DB
+        for provider in affectedProviders {
+            do {
+                try database.updateProvider(provider)
+            } catch {
+                print("Reassign sort order error: \(error)")
+            }
+        }
+
+        objectWillChange.send()
     }
 
     // MARK: - Import/Export

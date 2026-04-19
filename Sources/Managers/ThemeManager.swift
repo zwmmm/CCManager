@@ -30,6 +30,21 @@ final class ThemeManager: ObservableObject {
         applyThemeColor()
     }
 
+    var providerGroupingEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "providerGroupingEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "providerGroupingEnabled") }
+    }
+
+    var providerGroupCollapsed_claudeCode: Bool {
+        get { UserDefaults.standard.bool(forKey: "providerGroupCollapsed_claudeCode") }
+        set { UserDefaults.standard.set(newValue, forKey: "providerGroupCollapsed_claudeCode") }
+    }
+
+    var providerGroupCollapsed_codex: Bool {
+        get { UserDefaults.standard.bool(forKey: "providerGroupCollapsed_codex") }
+        set { UserDefaults.standard.set(newValue, forKey: "providerGroupCollapsed_codex") }
+    }
+
     var colorScheme: ColorScheme? {
         switch themePreference {
         case "light": return .light

@@ -39,6 +39,7 @@
 		E6A0856C72AD63B47B4F6A68 /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47E81B53F3350B368B416052 /* UpdateManager.swift */; };
 		E98957DB30B148DD19CAEB02 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5168D0E333680BDBD6307C /* LaunchAtLoginManager.swift */; };
 		EC5C42272DDD5B6C3CDB6B0C /* UpdateWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */; };
+		F2FD8A2983C4D51FCE3BD0D1 /* CollapsibleGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */; };
 		F903F54F1755334827B29D7D /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = F624A892D11177B736EB4699 /* Down */; };
 		FFFE98F307FE044BE5C9116C /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7596402EB70948CBE259945 /* ConfigWriter.swift */; };
 /* End PBXBuildFile section */
@@ -52,6 +53,7 @@
 		3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
 		3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIInstallationManager.swift; sourceTree = "<group>"; };
 		3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateWindowController.swift; sourceTree = "<group>"; };
+		435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapsibleGroup.swift; sourceTree = "<group>"; };
 		47E81B53F3350B368B416052 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MingcuteClaudeFill.png; sourceTree = "<group>"; };
 		5634C4499FEC3FA34C30728D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -61,7 +63,7 @@
 		9DADC1F9CD32A3782FCFDD1F /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
 		A646992F7245FE13600EC45D /* ProviderTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTester.swift; sourceTree = "<group>"; };
 		A7596402EB70948CBE259945 /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
-		AA95335D68764C7632B97631 /* CCManagerCLI */ = {isa = PBXFileReference; includeInIndex = 0; path = CCManagerCLI; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA95335D68764C7632B97631 /* CCManagerCLI */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = text; name = CCManagerCLI; path = ccmanager; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6057F4D68D8F944EFE6D9BE /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
@@ -129,6 +131,7 @@
 		686E47FAEF980852F297B585 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */,
 				B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */,
 				195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */,
 				9DADC1F9CD32A3782FCFDD1F /* PixelAvatarView.swift */,
@@ -327,6 +330,7 @@
 			files = (
 				582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */,
 				3B863D9FCDD75F2592348A49 /* CLIInstallationManager.swift in Sources */,
+				F2FD8A2983C4D51FCE3BD0D1 /* CollapsibleGroup.swift in Sources */,
 				7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */,
 				C3325CBB7F766C604B8A475D /* ConfigWriter.swift in Sources */,
 				877C06474BF152A5D5F12A99 /* ContentView.swift in Sources */,

@@ -70,32 +70,119 @@ struct ThemeSettingsView: View {
                     Divider()
                         .padding(.horizontal, horizontalPadding)
 
-                    // Editor
-                    sectionHeader("EDITOR")
+                    // General Settings
+                    sectionHeader("GENERAL")
 
-                    editorSection
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
+                    VStack(spacing: 0) {
+                        // Editor
+                        Button {
+                            showEditorPicker.toggle()
+                        } label: {
+                            HStack {
+                                Text("Editor")
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if let selected = editorManager.selectedEditor,
+                                   let icon = editorManager.icon(for: selected.bundleId) {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 14, height: 14)
+                                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                                    Text(selected.displayName)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                } else {
+                                    Text("Select...")
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
+                            EditorPickerPopover(editorManager: editorManager) {
+                                showEditorPicker = false
+                            }
+                        }
 
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
+                        // Provider Grouping
+                        HStack {
+                            Text("Provider Grouping")
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { ThemeManager.shared.providerGroupingEnabled },
+                                set: { newValue in
+                                    let wasEnabled = ThemeManager.shared.providerGroupingEnabled
+                                    ThemeManager.shared.providerGroupingEnabled = newValue
+                                    if !wasEnabled && newValue {
+                                        ProviderStore.shared.reassignSortOrderOnGroupingEnabled()
+                                    }
+                                }
+                            ))
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .tint(themeManager.brandColor)
+                        }
+                        .padding(.vertical, 10)
 
-                    // Data Management
-                    sectionHeader("DATA MANAGEMENT")
+                        if #available(macOS 13.0, *) {
+                            // Launch at Login
+                            HStack {
+                                Text("Launch at Login")
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Toggle("", isOn: Binding(
+                                    get: { LaunchAtLoginManager.shared.isEnabled },
+                                    set: { LaunchAtLoginManager.shared.setEnabled($0) }
+                                ))
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .tint(themeManager.brandColor)
+                            }
+                            .padding(.vertical, 10)
+                        }
 
-                    dataManagementSection
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
+                        // Import / Export
+                        HStack {
+                            Text("Import / Export")
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            HStack(spacing: 6) {
+                                Button {
+                                    exportProviders()
+                                } label: {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 10, weight: .medium))
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(themeManager.brandColor)
 
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
-
-                    // Launch at Login
-                    sectionHeader("LAUNCH AT LOGIN")
-
-                    launchAtLoginSection
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
+                                Button {
+                                    importProviders()
+                                } label: {
+                                    Image(systemName: "square.and.arrow.down")
+                                        .font(.system(size: 10, weight: .medium))
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(themeManager.brandColor)
+                            }
+                        }
+                        .padding(.vertical, 10)
+                    }
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 14)
 
                     Divider()
                         .padding(.horizontal, horizontalPadding)
@@ -134,55 +221,6 @@ struct ThemeSettingsView: View {
         }
         .frame(width: 340)
         .background(Color(nsColor: .windowBackgroundColor))
-    }
-
-    // MARK: - Editor Section
-    private var editorSection: some View {
-        Button {
-            showEditorPicker.toggle()
-        } label: {
-            HStack(spacing: 10) {
-                if let selected = editorManager.selectedEditor,
-                   let icon = editorManager.icon(for: selected.bundleId) {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .frame(width: 20, height: 20)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                    Text(selected.displayName)
-                        .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.primary)
-                } else {
-                    Image(systemName: "curlybraces")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 20)
-                    Text("Select editor...")
-                        .font(.system(size: 13, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(showEditorPicker ? themeManager.brandColor.opacity(0.6) : Color.clear, lineWidth: 1)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
-            EditorPickerPopover(editorManager: editorManager) {
-                showEditorPicker = false
-            }
-        }
     }
 
     // MARK: - Color Picker Grid
@@ -299,66 +337,6 @@ struct ThemeSettingsView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(isSelected ? themeManager.brandColor : .primary)
-    }
-
-    // MARK: - Data Management Section
-    private var dataManagementSection: some View {
-        HStack(spacing: 8) {
-            Button {
-                exportProviders()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 10, weight: .medium))
-                    Text("Export")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(themeManager.brandColor.opacity(0.15))
-                .clipShape(Capsule())
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                importProviders()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 10, weight: .medium))
-                    Text("Import")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(themeManager.brandColor.opacity(0.30))
-                .clipShape(Capsule())
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    // MARK: - Launch at Login Section
-    @available(macOS 13.0, *)
-    private var launchAtLoginSection: some View {
-        HStack {
-            Text("Launch at Login")
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            Toggle("", isOn: Binding(
-                get: { LaunchAtLoginManager.shared.isEnabled },
-                set: { LaunchAtLoginManager.shared.setEnabled($0) }
-            ))
-            .toggleStyle(.switch)
-            .labelsHidden()
-            .tint(themeManager.brandColor)
-        }
-        .padding(.vertical, 8)
     }
 
     // MARK: - CLI Section
