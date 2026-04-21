@@ -16,6 +16,8 @@ final class ProviderTester {
             return await testClaudeCode(provider: provider)
         case .codex:
             return await testCodex(provider: provider)
+        case .codexOAuth:
+            return await testCodex(provider: provider)
         }
     }
 

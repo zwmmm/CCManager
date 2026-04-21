@@ -208,7 +208,7 @@ struct ProviderFormView: View {
             if case .edit(let provider) = mode {
                 name = provider.name
                 type = provider.type
-                apiKey = provider.apiKey
+                apiKey = provider.apiKey ?? ""
                 baseUrl = provider.baseUrl
                 model = provider.model ?? ""
                 thinkingModel = provider.thinkingModel ?? ""

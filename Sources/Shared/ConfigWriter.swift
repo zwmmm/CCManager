@@ -22,6 +22,7 @@ final class ConfigWriter {
         switch provider.type {
         case .claudeCode: try writeClaudeCodeConfig(provider)
         case .codex:      try writeCodexConfig(provider)
+        case .codexOAuth: try writeCodexConfig(provider)
         }
     }
 
@@ -65,7 +66,7 @@ final class ConfigWriter {
         let authUrl = codexDir.appendingPathComponent("auth.json")
         var auth: [String: String] = (try? Data(contentsOf: authUrl))
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] } ?? [:]
-        auth["OPENAI_API_KEY"] = provider.apiKey
+        auth["OPENAI_API_KEY"] = provider.apiKey ?? ""
         let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
         try authData.write(to: authUrl, options: .atomic)
 

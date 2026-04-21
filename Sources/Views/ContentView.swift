@@ -391,7 +391,7 @@ struct ProviderDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(spacing: 0) {
                         let labels = configLabels(for: provider.type)
-                        configRow(labels.apiKey, maskAPIKey(provider.apiKey))
+                        configRow(labels.apiKey, maskAPIKey(provider.apiKey ?? ""))
                         Divider()
                         configRow(labels.baseUrl, provider.baseUrl)
                         if let model = provider.model, !model.isEmpty {
@@ -475,6 +475,8 @@ struct ProviderDetailView: View {
             return ConfigLabels(apiKey: "ANTHROPIC_AUTH_TOKEN", baseUrl: "ANTHROPIC_BASE_URL", model: "ANTHROPIC_MODEL")
         case .codex:
             return ConfigLabels(apiKey: "api_key", baseUrl: "base_url", model: "model")
+        case .codexOAuth:
+            return ConfigLabels(apiKey: "oauth_access_token", baseUrl: "base_url", model: "model")
         }
     }
 

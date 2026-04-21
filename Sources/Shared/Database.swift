@@ -14,7 +14,7 @@ final class Database {
     private let idColumn = Expression<String>("id")
     private let nameColumn = Expression<String>("name")
     private let typeColumn = Expression<String>("type")
-    private let apiKeyColumn = Expression<String>("api_key")
+    private let apiKeyColumn = Expression<String?>("api_key")
     private let baseUrlColumn = Expression<String>("base_url")
     private let modelColumn = Expression<String?>("model")
     private let thinkingModelColumn = Expression<String?>("thinking_model")
@@ -23,6 +23,12 @@ final class Database {
     private let opusModelColumn = Expression<String?>("opus_model")
     private let isActiveColumn = Expression<Bool>("is_active")
     private let sortOrderColumn = Expression<Int>("sort_order")
+    private let oauthAccountIdColumn = Expression<String?>("oauth_account_id")
+    private let oauthAccessTokenColumn = Expression<String?>("oauth_access_token")
+    private let oauthRefreshTokenColumn = Expression<String?>("oauth_refresh_token")
+    private let oauthIdTokenColumn = Expression<String?>("oauth_id_token")
+    private let oauthTokenExpiryColumn = Expression<Date?>("oauth_token_expiry")
+    private let oauthDisplayNameColumn = Expression<String?>("oauth_display_name")
 
     private init() {
         setupDatabase()
@@ -57,6 +63,12 @@ final class Database {
             t.column(opusModelColumn)
             t.column(isActiveColumn, defaultValue: false)
             t.column(sortOrderColumn, defaultValue: 0)
+            t.column(oauthAccountIdColumn)
+            t.column(oauthAccessTokenColumn)
+            t.column(oauthRefreshTokenColumn)
+            t.column(oauthIdTokenColumn)
+            t.column(oauthTokenExpiryColumn)
+            t.column(oauthDisplayNameColumn)
         })
     }
 
@@ -73,17 +85,27 @@ final class Database {
         }
 
         // Add missing columns
-        let migrations: [(String, SQLite.Expression<String?>)] = [
+        let stringMigrations: [(String, SQLite.Expression<String?>)] = [
             ("thinking_model", thinkingModelColumn),
             ("haiku_model", haikuModelColumn),
             ("sonnet_model", sonnetModelColumn),
             ("opus_model", opusModelColumn),
+            ("oauth_account_id", oauthAccountIdColumn),
+            ("oauth_access_token", oauthAccessTokenColumn),
+            ("oauth_refresh_token", oauthRefreshTokenColumn),
+            ("oauth_id_token", oauthIdTokenColumn),
+            ("oauth_display_name", oauthDisplayNameColumn),
         ]
 
-        for (colName, expression) in migrations {
+        for (colName, expression) in stringMigrations {
             if !existingColumns.contains(colName) {
                 try db.run(providersTable.addColumn(expression))
             }
+        }
+
+        // Date column needs separate handling due to different Expression type
+        if !existingColumns.contains("oauth_token_expiry") {
+            try db.run(providersTable.addColumn(oauthTokenExpiryColumn))
         }
     }
 
@@ -113,7 +135,13 @@ final class Database {
                         sonnetModel: row[self.sonnetModelColumn],
                         opusModel: row[self.opusModelColumn],
                         isActive: row[self.isActiveColumn],
-                        sortOrder: row[self.sortOrderColumn]
+                        sortOrder: row[self.sortOrderColumn],
+                        oauthAccountId: row[self.oauthAccountIdColumn],
+                        oauthAccessToken: row[self.oauthAccessTokenColumn],
+                        oauthRefreshToken: row[self.oauthRefreshTokenColumn],
+                        oauthIdToken: row[self.oauthIdTokenColumn],
+                        oauthTokenExpiry: row[self.oauthTokenExpiryColumn],
+                        oauthDisplayName: row[self.oauthDisplayNameColumn]
                     )
                     results.append(provider)
                 }
@@ -141,7 +169,13 @@ final class Database {
             sonnetModelColumn <- provider.sonnetModel,
             opusModelColumn <- provider.opusModel,
             isActiveColumn <- provider.isActive,
-            sortOrderColumn <- provider.sortOrder
+            sortOrderColumn <- provider.sortOrder,
+            oauthAccountIdColumn <- provider.oauthAccountId,
+            oauthAccessTokenColumn <- provider.oauthAccessToken,
+            oauthRefreshTokenColumn <- provider.oauthRefreshToken,
+            oauthIdTokenColumn <- provider.oauthIdToken,
+            oauthTokenExpiryColumn <- provider.oauthTokenExpiry,
+            oauthDisplayNameColumn <- provider.oauthDisplayName
         ))
     }
 
@@ -160,7 +194,13 @@ final class Database {
             sonnetModelColumn <- provider.sonnetModel,
             opusModelColumn <- provider.opusModel,
             isActiveColumn <- provider.isActive,
-            sortOrderColumn <- provider.sortOrder
+            sortOrderColumn <- provider.sortOrder,
+            oauthAccountIdColumn <- provider.oauthAccountId,
+            oauthAccessTokenColumn <- provider.oauthAccessToken,
+            oauthRefreshTokenColumn <- provider.oauthRefreshToken,
+            oauthIdTokenColumn <- provider.oauthIdToken,
+            oauthTokenExpiryColumn <- provider.oauthTokenExpiry,
+            oauthDisplayNameColumn <- provider.oauthDisplayName
         ))
     }
 

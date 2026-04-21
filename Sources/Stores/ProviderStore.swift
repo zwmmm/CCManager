@@ -138,6 +138,12 @@ final class ProviderStore: ObservableObject {
                     affectedProviders.append(providers[idx])
                     codexOrder += 1
                 }
+            case .codexOAuth:
+                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
+                    providers[idx].sortOrder = codexOrder
+                    affectedProviders.append(providers[idx])
+                    codexOrder += 1
+                }
             }
         }
 

@@ -12,7 +12,7 @@ struct Provider: Identifiable, Equatable, Codable {
     var id: UUID
     var name: String
     var type: ProviderType
-    var apiKey: String
+    var apiKey: String?
     var baseUrl: String
     var model: String?
     var thinkingModel: String?
@@ -22,11 +22,19 @@ struct Provider: Identifiable, Equatable, Codable {
     var isActive: Bool
     var sortOrder: Int
 
+    // === Codex OAuth 专用字段 ===
+    var oauthAccountId: String?
+    var oauthAccessToken: String?
+    var oauthRefreshToken: String?
+    var oauthIdToken: String?
+    var oauthTokenExpiry: Date?
+    var oauthDisplayName: String?
+
     init(
         id: UUID = UUID(),
         name: String,
         type: ProviderType,
-        apiKey: String,
+        apiKey: String?,
         baseUrl: String,
         model: String? = nil,
         thinkingModel: String? = nil,
@@ -34,7 +42,13 @@ struct Provider: Identifiable, Equatable, Codable {
         sonnetModel: String? = nil,
         opusModel: String? = nil,
         isActive: Bool = false,
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
+        oauthAccountId: String? = nil,
+        oauthAccessToken: String? = nil,
+        oauthRefreshToken: String? = nil,
+        oauthIdToken: String? = nil,
+        oauthTokenExpiry: Date? = nil,
+        oauthDisplayName: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -48,6 +62,12 @@ struct Provider: Identifiable, Equatable, Codable {
         self.opusModel = opusModel
         self.isActive = isActive
         self.sortOrder = sortOrder
+        self.oauthAccountId = oauthAccountId
+        self.oauthAccessToken = oauthAccessToken
+        self.oauthRefreshToken = oauthRefreshToken
+        self.oauthIdToken = oauthIdToken
+        self.oauthTokenExpiry = oauthTokenExpiry
+        self.oauthDisplayName = oauthDisplayName
     }
 }
 
