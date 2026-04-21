@@ -22,7 +22,7 @@ final class ConfigWriter {
         switch provider.type {
         case .claudeCode: try writeClaudeCodeConfig(provider)
         case .codex:      try writeCodexConfig(provider)
-        case .codexOAuth: try writeCodexConfig(provider)
+        case .codexOAuth: try writeCodexOAuthConfig(provider)
         }
     }
 
@@ -83,6 +83,40 @@ final class ConfigWriter {
         """
 
         try config.write(to: codexConfig, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Codex OAuth → ~/.codex/auth.json + config.toml
+
+    private func writeCodexOAuthConfig(_ provider: Provider) throws {
+        try fileManager.createDirectory(at: codexDir, withIntermediateDirectories: true)
+
+        // Write auth.json
+        let authUrl = codexDir.appendingPathComponent("auth.json")
+        var auth: [String: Any] = (try? Data(contentsOf: authUrl))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+
+        auth["auth_mode"] = "chatgpt"
+        auth["OPENAI_API_KEY"] = NSNull()
+
+        var tokens: [String: Any] = [
+            "id_token": provider.oauthIdToken ?? "",
+            "access_token": provider.oauthAccessToken ?? "",
+            "refresh_token": provider.oauthRefreshToken ?? "",
+            "account_id": provider.oauthAccountId ?? ""
+        ]
+        auth["tokens"] = tokens
+        auth["last_refresh"] = ISO8601DateFormatter().string(from: Date())
+
+        let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
+        try authData.write(to: authUrl, options: .atomic)
+
+        // Write config.toml (only model field, no model_provider)
+        let model = provider.model ?? "gpt-4o"
+        let configContent = """
+        model = "\(model)"
+
+        """
+        try configContent.write(to: codexConfig, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Read helpers
