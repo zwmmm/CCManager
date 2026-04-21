@@ -32,19 +32,31 @@ struct ProviderFormView: View {
     @State private var isTesting: Bool = false
     @State private var testMessage: String?
     @State private var testSuccess: Bool = false
+    @State private var oauthIsLoggedIn: Bool = false
+    @State private var oauthDisplayName: String = ""
+    @State private var showOAuthLogin: Bool = false
+    @State private var pendingOauthTokens: (accessToken: String, refreshToken: String, idToken: String)?
 
     private var baseUrlPlaceholder: String {
-        type == .codex ? "https://api.openai.com/v1" : "https://api.anthropic.com"
+        switch type {
+        case .claudeCode: return "https://api.anthropic.com"
+        case .codex: return "https://api.openai.com/v1"
+        case .codexOAuth: return "https://api.openai.com/v1"
+        }
     }
 
     private var modelPlaceholder: String {
-        type == .codex ? "gpt-4o" : "claude-sonnet-4-20250514"
+        switch type {
+        case .claudeCode: return "claude-sonnet-4-20250514"
+        case .codex: return "gpt-4o"
+        case .codexOAuth: return "gpt-4o"
+        }
     }
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !apiKey.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !baseUrl.trimmingCharacters(in: .whitespaces).isEmpty
+        !baseUrl.trimmingCharacters(in: .whitespaces).isEmpty &&
+        (type == .codexOAuth ? true : !apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
     private var isEditing: Bool {
@@ -107,8 +119,58 @@ struct ProviderFormView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     fieldGroup("NAME", text: $name, placeholder: "My Provider")
-                    fieldGroup("API KEY", text: $apiKey, placeholder: "sk-...", isSecure: true)
+                    if type != .codexOAuth {
+                        fieldGroup("API KEY", text: $apiKey, placeholder: "sk-...", isSecure: true)
+                    }
                     fieldGroup("BASE URL", text: $baseUrl, placeholder: baseUrlPlaceholder)
+
+                    // OAuth Account section (only for codexOAuth)
+                    if type == .codexOAuth {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("ACCOUNT")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .textCase(.uppercase)
+
+                            if oauthIsLoggedIn {
+                                HStack {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.system(size: 12))
+                                    Text(oauthDisplayName.isEmpty ? "Logged in" : oauthDisplayName)
+                                        .font(.system(size: 12, design: .monospaced))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer()
+                                    Button("Logout") {
+                                        oauthIsLoggedIn = false
+                                        oauthDisplayName = ""
+                                    }
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .buttonStyle(.bordered)
+                                }
+                                .padding(10)
+                                .background(Color(nsColor: .controlBackgroundColor))
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            } else {
+                                Button {
+                                    showOAuthLogin = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "person.badge.plus")
+                                        Text("Login with ChatGPT")
+                                    }
+                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(themeManager.brandColor)
+                            }
+                        }
+                    }
+
                     fieldGroup("MODEL (OPTIONAL)", text: $model, placeholder: modelPlaceholder)
 
                     // Advanced model settings (only for Claude Code)
@@ -130,9 +192,10 @@ struct ProviderFormView: View {
                 }
                 .padding(18)
 
-                // Presets — filtered by current type
-                let filteredPresets = PresetProvider.presets.filter { $0.type == type }
-                if !filteredPresets.isEmpty {
+                // Presets — filtered by current type (not shown for codexOAuth)
+                if type != .codexOAuth {
+                    let filteredPresets = PresetProvider.presets.filter { $0.type == type }
+                    if !filteredPresets.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(filteredPresets, id: \.name) { preset in
@@ -153,6 +216,7 @@ struct ProviderFormView: View {
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 14)
+                    }
                 }
             }
 
@@ -215,6 +279,16 @@ struct ProviderFormView: View {
                 haikuModel = provider.haikuModel ?? ""
                 sonnetModel = provider.sonnetModel ?? ""
                 opusModel = provider.opusModel ?? ""
+                oauthIsLoggedIn = provider.oauthAccountId != nil
+                oauthDisplayName = provider.oauthDisplayName ?? ""
+            }
+        }
+        .sheet(isPresented: $showOAuthLogin) {
+            OAuthLoginSheet { accountId, accessToken, refreshToken, idToken, displayName in
+                self.oauthIsLoggedIn = true
+                self.oauthDisplayName = displayName ?? "ChatGPT Account"
+                self.pendingOauthTokens = (accessToken, refreshToken, idToken)
+                self.showOAuthLogin = false
             }
         }
     }
@@ -252,21 +326,27 @@ struct ProviderFormView: View {
             provider = Provider(
                 name: name.trimmingCharacters(in: .whitespaces),
                 type: type,
-                apiKey: apiKey.trimmingCharacters(in: .whitespaces),
+                apiKey: type == .codexOAuth ? nil : apiKey.trimmingCharacters(in: .whitespaces),
                 baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
                 thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
                 haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
                 sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
                 opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces),
-                sortOrder: 0
+                sortOrder: 0,
+                oauthAccountId: type == .codexOAuth ? UUID().uuidString : nil,
+                oauthAccessToken: type == .codexOAuth ? pendingOauthTokens?.accessToken : nil,
+                oauthRefreshToken: type == .codexOAuth ? pendingOauthTokens?.refreshToken : nil,
+                oauthIdToken: type == .codexOAuth ? pendingOauthTokens?.idToken : nil,
+                oauthTokenExpiry: type == .codexOAuth ? Date() : nil,
+                oauthDisplayName: type == .codexOAuth ? (oauthDisplayName.isEmpty ? nil : oauthDisplayName) : nil
             )
         case .edit(let existing):
             provider = Provider(
                 id: existing.id,
                 name: name.trimmingCharacters(in: .whitespaces),
                 type: type,
-                apiKey: apiKey.trimmingCharacters(in: .whitespaces),
+                apiKey: type == .codexOAuth ? nil : apiKey.trimmingCharacters(in: .whitespaces),
                 baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
                 thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
@@ -274,7 +354,13 @@ struct ProviderFormView: View {
                 sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
                 opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces),
                 isActive: existing.isActive,
-                sortOrder: existing.sortOrder
+                sortOrder: existing.sortOrder,
+                oauthAccountId: type == .codexOAuth ? (existing.oauthAccountId ?? UUID().uuidString) : nil,
+                oauthAccessToken: type == .codexOAuth ? (pendingOauthTokens?.accessToken ?? existing.oauthAccessToken) : nil,
+                oauthRefreshToken: type == .codexOAuth ? (pendingOauthTokens?.refreshToken ?? existing.oauthRefreshToken) : nil,
+                oauthIdToken: type == .codexOAuth ? (pendingOauthTokens?.idToken ?? existing.oauthIdToken) : nil,
+                oauthTokenExpiry: type == .codexOAuth ? existing.oauthTokenExpiry : nil,
+                oauthDisplayName: type == .codexOAuth ? (oauthDisplayName.isEmpty ? existing.oauthDisplayName : oauthDisplayName) : nil
             )
         }
         onSave(provider)
