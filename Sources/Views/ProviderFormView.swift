@@ -143,9 +143,15 @@ struct ProviderFormView: View {
                                         .lineLimit(1)
                                         .truncationMode(.middle)
                                     Spacer()
+                                    Button("Refresh Token") {
+                                        showOAuthLogin = true
+                                    }
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .buttonStyle(.bordered)
                                     Button("Logout") {
                                         oauthIsLoggedIn = false
                                         oauthDisplayName = ""
+                                        pendingOauthTokens = nil
                                     }
                                     .font(.system(size: 11, design: .monospaced))
                                     .buttonStyle(.bordered)

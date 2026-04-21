@@ -46,18 +46,29 @@ actor OAuthLoginManager {
 
         throw OAuthError.timeout
     }
+
+    /// 刷新指定 provider 的 OAuth token
+    /// 当前实现：重新执行 Device Code 登录流程
+    /// 注意：真正的 OAuth refresh 需要调用 OpenAI OAuth token 刷新端点
+    func refreshToken() async throws {
+        // 目前通过重新执行 Device Code 流程来实现刷新
+        // 用户需要重新在浏览器中授权
+        throw OAuthError.refreshNotSupported
+    }
 }
 
 enum OAuthError: Error, LocalizedError {
     case parseFailed
     case timeout
     case cancelled
+    case refreshNotSupported
 
     var errorDescription: String? {
         switch self {
         case .parseFailed: return "Failed to parse Device Code from output"
         case .timeout: return "Login timeout (15 minutes)"
         case .cancelled: return "Login cancelled"
+        case .refreshNotSupported: return "Token refresh requires re-authentication via browser"
         }
     }
 }
