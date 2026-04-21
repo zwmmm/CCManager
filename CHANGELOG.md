@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.3] - 2026-04-22
+
+### Others
+
+- Update version for testing update mechanism
+
 ## [1.9.2] - 2026-04-21
 
 ### Bug Fixes
