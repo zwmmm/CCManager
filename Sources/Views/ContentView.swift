@@ -391,8 +391,18 @@ struct ProviderDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(spacing: 0) {
                         let labels = configLabels(for: provider.type)
-                        configRow(labels.apiKey, maskAPIKey(provider.apiKey ?? ""))
-                        Divider()
+                        if provider.type == .codexOAuth {
+                            if let displayName = provider.oauthDisplayName, !displayName.isEmpty {
+                                configRow("ACCOUNT", displayName)
+                                Divider()
+                            } else {
+                                configRow("ACCOUNT", "ChatGPT Account")
+                                Divider()
+                            }
+                        } else {
+                            configRow(labels.apiKey, maskAPIKey(provider.apiKey ?? ""))
+                            Divider()
+                        }
                         configRow(labels.baseUrl, provider.baseUrl)
                         if let model = provider.model, !model.isEmpty {
                             Divider()
