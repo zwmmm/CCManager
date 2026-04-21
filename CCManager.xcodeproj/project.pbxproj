@@ -11,16 +11,21 @@
 		0B02BDD6DD3FB782B98324AB /* ProviderTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A646992F7245FE13600EC45D /* ProviderTester.swift */; };
 		0B3208F764F054342083ABC9 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E01A352B3F003C9DA9DC580A /* ThemeManager.swift */; };
 		150155C6D4D49A3BE04790D3 /* PixelAvatarCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */; };
+		1B823DFD20BE296167591CF5 /* OAuthLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAED632FE433248AB922FB55 /* OAuthLoginManager.swift */; };
 		228B2B5533FA4B35A93BFE40 /* EditorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C59CDE979907DB909860DF /* EditorManager.swift */; };
 		35D88A935AE74D78298A5487 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129EC2323C4B2F104B519350 /* Database.swift */; };
 		3B863D9FCDD75F2592348A49 /* CLIInstallationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */; };
 		40CCC4DE2F2A71E538DE85D6 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */; };
+		467446BCB8B11F703836B068 /* OAuthLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAED632FE433248AB922FB55 /* OAuthLoginManager.swift */; };
 		48E71F56A2854E160079579F /* ListReorderPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F3E8B4327C3344D5F74464 /* ListReorderPreview.swift */; };
 		4FE5220BBD51F5DFF497D6BD /* ProviderFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BABCAFBE8308830BF833121 /* ProviderFormView.swift */; };
+		50998FB3E772C2E1D5B3167A /* CodexOAuthLoginParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */; };
+		51069F32AE816D13AB31CCE5 /* OAuthLoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E711AE8FC5501781E7D5165D /* OAuthLoginSheet.swift */; };
 		582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1337C4E3B6B34325B2491F3B /* AppDelegate.swift */; };
 		6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */; };
 		75E0E7A60936364918D1C78D /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6057F4D68D8F944EFE6D9BE /* ToastView.swift */; };
 		777BD8376621B35EAF543A4F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 171E268F104B15D8AEE7F408 /* Sparkle */; };
+		7A422159396D0E67C5E8785F /* CodexOAuthLoginParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */; };
 		7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */; };
 		82A235B1D950734A087F1775 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = EAFEEE32F704681488ECF5EE /* SQLite */; };
 		8761137C385660B7776D7F44 /* ProviderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE708FAEB509391E76CCD50F /* ProviderListView.swift */; };
@@ -51,6 +56,7 @@
 		129EC2323C4B2F104B519350 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		1337C4E3B6B34325B2491F3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarCache.swift; sourceTree = "<group>"; };
+		1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexOAuthLoginParser.swift; sourceTree = "<group>"; };
 		3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
 		3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIInstallationManager.swift; sourceTree = "<group>"; };
 		3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateWindowController.swift; sourceTree = "<group>"; };
@@ -75,6 +81,8 @@
 		DA0D519C657FBE143B7067CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DE708FAEB509391E76CCD50F /* ProviderListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderListView.swift; sourceTree = "<group>"; };
 		E01A352B3F003C9DA9DC580A /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		E711AE8FC5501781E7D5165D /* OAuthLoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthLoginSheet.swift; sourceTree = "<group>"; };
+		EAED632FE433248AB922FB55 /* OAuthLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthLoginManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +144,7 @@
 				435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */,
 				B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */,
 				A4F3E8B4327C3344D5F74464 /* ListReorderPreview.swift */,
+				E711AE8FC5501781E7D5165D /* OAuthLoginSheet.swift */,
 				195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */,
 				9DADC1F9CD32A3782FCFDD1F /* PixelAvatarView.swift */,
 				9BABCAFBE8308830BF833121 /* ProviderFormView.swift */,
@@ -150,8 +159,10 @@
 		85B427BC873135B09994646E /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */,
 				A7596402EB70948CBE259945 /* ConfigWriter.swift */,
 				129EC2323C4B2F104B519350 /* Database.swift */,
+				EAED632FE433248AB922FB55 /* OAuthLoginManager.swift */,
 				A646992F7245FE13600EC45D /* ProviderTester.swift */,
 			);
 			path = Shared;
@@ -318,9 +329,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				50998FB3E772C2E1D5B3167A /* CodexOAuthLoginParser.swift in Sources */,
 				40CCC4DE2F2A71E538DE85D6 /* ColorPalette.swift in Sources */,
 				FFFE98F307FE044BE5C9116C /* ConfigWriter.swift in Sources */,
 				BA4EB14C5D0B3FDEA68360D9 /* Database.swift in Sources */,
+				467446BCB8B11F703836B068 /* OAuthLoginManager.swift in Sources */,
 				D78DF66E643AA833FE6F2E89 /* Provider.swift in Sources */,
 				0B02BDD6DD3FB782B98324AB /* ProviderTester.swift in Sources */,
 				A3F5B5903C75CE5856DC912B /* main.swift in Sources */,
@@ -333,6 +346,7 @@
 			files = (
 				582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */,
 				3B863D9FCDD75F2592348A49 /* CLIInstallationManager.swift in Sources */,
+				7A422159396D0E67C5E8785F /* CodexOAuthLoginParser.swift in Sources */,
 				F2FD8A2983C4D51FCE3BD0D1 /* CollapsibleGroup.swift in Sources */,
 				7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */,
 				C3325CBB7F766C604B8A475D /* ConfigWriter.swift in Sources */,
@@ -341,6 +355,8 @@
 				228B2B5533FA4B35A93BFE40 /* EditorManager.swift in Sources */,
 				E98957DB30B148DD19CAEB02 /* LaunchAtLoginManager.swift in Sources */,
 				48E71F56A2854E160079579F /* ListReorderPreview.swift in Sources */,
+				1B823DFD20BE296167591CF5 /* OAuthLoginManager.swift in Sources */,
+				51069F32AE816D13AB31CCE5 /* OAuthLoginSheet.swift in Sources */,
 				150155C6D4D49A3BE04790D3 /* PixelAvatarCache.swift in Sources */,
 				945796ED1E4A94246883FC45 /* PixelAvatarView.swift in Sources */,
 				0A39583DBB95FB44C0D3264C /* Provider.swift in Sources */,
