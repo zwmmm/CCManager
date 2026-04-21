@@ -1,223 +1,325 @@
 import AppKit
-import Sparkle
 import Combine
+import CryptoKit
+import Foundation
 
-/// 自定义 UserDriver，将更新流程桥接到自定义弹窗
-final class UpdateUserDriver: NSObject, SPUUserDriver {
-    private let standardDriver: SPUStandardUserDriver
-    private var updateWindowController: UpdateWindowController?
+enum UpdateError: LocalizedError {
+    case invalidHTTPResponse
+    case downloadFailed
+    case hashMismatch(expected: String, actual: String)
+    case unzipFailed
+    case appNotFound
+    case replaceFailed(String)
 
-    override init() {
-        self.standardDriver = SPUStandardUserDriver(hostBundle: .main, delegate: nil)
-        super.init()
-    }
-
-    func show(_ request: SPUUpdatePermissionRequest, reply: @escaping @Sendable (SUUpdatePermissionResponse) -> Void) {
-        standardDriver.show(request, reply: reply)
-    }
-
-    func showUserInitiatedUpdateCheck(cancellation: @escaping () -> Void) {
-        standardDriver.showUserInitiatedUpdateCheck(cancellation: cancellation)
-    }
-
-    func showUpdateFound(with appcastItem: SUAppcastItem, state: SPUUserUpdateState, reply: @escaping @Sendable (SPUUserUpdateChoice) -> Void) {
-        updateWindowController = UpdateWindowController(
-            appcastItem: appcastItem,
-            onInstall: { [weak self] in
-                reply(.install)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self?.closeWindowController()
-                }
-            },
-            onSkip: { [weak self] in
-                reply(.skip)
-                self?.closeWindowController()
-            },
-            onDismiss: { [weak self] in
-                reply(.skip)
-                self?.closeWindowController()
-            }
-        )
-        updateWindowController?.show()
-    }
-
-    private func closeWindowController() {
-        updateWindowController?.close()
-        updateWindowController = nil
-    }
-
-    func showUpdateReleaseNotes(with downloadData: SPUDownloadData) {
-        standardDriver.showUpdateReleaseNotes(with: downloadData)
-    }
-
-    func showUpdateReleaseNotesFailedToDownloadWithError(_ error: any Error) {
-        standardDriver.showUpdateReleaseNotesFailedToDownloadWithError(error)
-    }
-
-    func showUpdateNotFoundWithError(_ error: any Error, acknowledgement: @escaping () -> Void) {
-        standardDriver.showUpdateNotFoundWithError(error, acknowledgement: acknowledgement)
-    }
-
-    func showUpdaterError(_ error: any Error, acknowledgement: @escaping () -> Void) {
-        standardDriver.showUpdaterError(error, acknowledgement: acknowledgement)
-    }
-
-    func showDownloadInitiated(cancellation: @escaping () -> Void) {
-        standardDriver.showDownloadInitiated(cancellation: cancellation)
-    }
-
-    func showDownloadDidReceiveExpectedContentLength(_ expectedContentLength: UInt64) {
-        standardDriver.showDownloadDidReceiveExpectedContentLength(expectedContentLength)
-    }
-
-    func showDownloadDidReceiveData(ofLength length: UInt64) {
-        standardDriver.showDownloadDidReceiveData(ofLength: length)
-    }
-
-    func showDownloadDidStartExtractingUpdate() {
-        closeWindowController()
-        standardDriver.showDownloadDidStartExtractingUpdate()
-    }
-
-    func showExtractionReceivedProgress(_ progress: Double) {
-        standardDriver.showExtractionReceivedProgress(progress)
-    }
-
-    func showReady(toInstallAndRelaunch reply: @escaping @Sendable (SPUUserUpdateChoice) -> Void) {
-        NSApp.activate(ignoringOtherApps: true)
-        standardDriver.showReady(toInstallAndRelaunch: reply)
-    }
-
-    func showInstallingUpdate(withApplicationTerminated applicationTerminated: Bool, retryTerminatingApplication: @escaping () -> Void) {
-        if !applicationTerminated {
-            NSApp.stopModal()
-            for window in NSApp.windows {
-                window.close()
-            }
-            retryTerminatingApplication()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                exit(0)
-            }
+    var errorDescription: String? {
+        switch self {
+        case .invalidHTTPResponse:
+            return "更新源响应无效，请稍后重试。"
+        case .downloadFailed:
+            return "更新包下载失败，请检查网络连接。"
+        case .hashMismatch(let expected, let actual):
+            return "文件校验失败，可能已损坏或被篡改。\n期望: \(expected.prefix(16))...\n实际: \(actual.prefix(16))..."
+        case .unzipFailed:
+            return "更新包解压失败，下载文件可能已损坏。"
+        case .appNotFound:
+            return "解压后未找到 CCManager.app。"
+        case .replaceFailed(let reason):
+            return "替换应用失败：\(reason)"
         }
-    }
-
-    func showUpdateInstalledAndRelaunched(_ relaunched: Bool, acknowledgement: @escaping () -> Void) {
-        standardDriver.showUpdateInstalledAndRelaunched(relaunched, acknowledgement: acknowledgement)
-    }
-
-    func showUpdateInFocus() {
-        standardDriver.showUpdateInFocus()
-    }
-
-    func dismissUpdateInstallation() {
-        standardDriver.dismissUpdateInstallation()
     }
 }
 
-/// 管理应用自动更新的单例类
-/// 封装 Sparkle 的 SPUUpdater，提供 SwiftUI 友好的接口
-final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
-
-    // MARK: - Singleton
-
+/// 管理应用热更新的单例类。
+/// 使用 GitHub Release 中的 appcast.xml 检查版本，下载 ZIP 后进行 SHA256 校验和原子替换。
+final class UpdateManager: NSObject, ObservableObject {
     static let shared = UpdateManager()
 
-    // MARK: - Published Properties
+    private static let githubRepo = "zwmmm/CCManager"
+    private static let appcastURL = URL(string: "https://github.com/\(githubRepo)/releases/latest/download/appcast.xml")!
+    private static let releasesURL = URL(string: "https://github.com/\(githubRepo)/releases")!
 
-    /// 是否可以检查更新（用于 UI 按钮状态绑定）
-    @Published var canCheckForUpdates: Bool = false
-
-    /// 最后一次检查更新的时间
+    @Published var canCheckForUpdates: Bool = true
     @Published var lastUpdateCheckDate: Date?
-
-    /// 更新是否成功安装（应用启动后检测到新版本安装完成）
     @Published var updateInstalled: Bool = false
+    @Published var isChecking: Bool = false
+    @Published var updateStatus: String = ""
 
-    // MARK: - Private Properties
-
-    private var updater: SPUUpdater!
-    private let userDriver: UpdateUserDriver
-    private var cancellables = Set<AnyCancellable>()
     private let lastInstalledVersionKey = "CCManager.LastInstalledVersion"
+    private let session: URLSession
+    private var updateWindowController: UpdateWindowController?
+    private var automaticCheckTimer: Timer?
 
-    // MARK: - Computed Properties
-
-    /// 当前应用版本号
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
     }
 
-    /// 当前构建号
     var currentBuild: String {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
     }
 
-    /// 是否启用自动检查
-    var automaticallyChecksForUpdates: Bool {
-        get { updater.automaticallyChecksForUpdates }
-        set { updater.automaticallyChecksForUpdates = newValue }
+    var isInstallingUpdate: Bool {
+        !canCheckForUpdates && !updateStatus.isEmpty && !isChecking
     }
-
-    /// 自动检查间隔（秒）
-    var updateCheckInterval: TimeInterval {
-        get { updater.updateCheckInterval }
-        set { updater.updateCheckInterval = newValue }
-    }
-
-    // MARK: - Initialization
 
     private override init() {
-        // 初始化自定义 UserDriver
-        self.userDriver = UpdateUserDriver()
-
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 10
+        configuration.timeoutIntervalForResource = 120
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.urlCache = nil
+        self.session = URLSession(configuration: configuration)
         super.init()
+        checkForUpdateSuccess()
+    }
 
-        // 直接创建 SPUUpdater，手动传入自定义 userDriver
-        self.updater = SPUUpdater(
-            hostBundle: .main,
-            applicationBundle: .main,
-            userDriver: userDriver,
-            delegate: self
+    func checkForUpdates() {
+        guard canCheckForUpdates else { return }
+
+        canCheckForUpdates = false
+        isChecking = true
+        updateStatus = "Checking..."
+
+        Task {
+            do {
+                let item = try await fetchLatestUpdate()
+
+                await MainActor.run {
+                    self.lastUpdateCheckDate = Date()
+                    self.isChecking = false
+                    self.canCheckForUpdates = true
+                    self.updateStatus = ""
+                }
+
+                guard UpdateFeedParser.isVersion(item.shortVersion, newerThan: currentVersion) else {
+                    await showNoUpdateAlert()
+                    return
+                }
+
+                await showUpdateAlert(item)
+            } catch {
+                await MainActor.run {
+                    self.isChecking = false
+                    self.canCheckForUpdates = true
+                    self.updateStatus = ""
+                }
+                await showUpdateError(error)
+            }
+        }
+    }
+
+    func checkForUpdatesInBackground() {
+        guard canCheckForUpdates, updateWindowController == nil else { return }
+
+        canCheckForUpdates = false
+
+        Task {
+            do {
+                let item = try await fetchLatestUpdate()
+
+                await MainActor.run {
+                    self.lastUpdateCheckDate = Date()
+                    self.canCheckForUpdates = true
+                }
+
+                guard UpdateFeedParser.isVersion(item.shortVersion, newerThan: currentVersion) else {
+                    return
+                }
+
+                await showUpdateAlert(item)
+            } catch {
+                await MainActor.run {
+                    self.canCheckForUpdates = true
+                }
+            }
+        }
+    }
+
+    func startAutomaticUpdateChecks(interval: TimeInterval = 4 * 60 * 60) {
+        automaticCheckTimer?.invalidate()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            self?.checkForUpdatesInBackground()
+        }
+
+        automaticCheckTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.checkForUpdatesInBackground()
+        }
+    }
+
+    func resetUpdateCycle() {
+        lastUpdateCheckDate = nil
+    }
+
+    private func fetchLatestUpdate() async throws -> UpdateFeedItem {
+        let (data, response) = try await session.data(from: Self.appcastURL)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let xml = String(data: data, encoding: .utf8) else {
+            throw UpdateError.invalidHTTPResponse
+        }
+        return try UpdateFeedParser.parse(xml)
+    }
+
+    private func performUpdate(_ item: UpdateFeedItem) {
+        canCheckForUpdates = false
+        updateStatus = "Downloading..."
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+
+            do {
+                let appURL = Bundle.main.bundleURL
+                let appDirectory = appURL.deletingLastPathComponent()
+                let tempDirectory = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("CCManagerUpdate-\(UUID().uuidString)", isDirectory: true)
+                let zipURL = tempDirectory.appendingPathComponent("CCManager.app.zip")
+                let extractURL = tempDirectory.appendingPathComponent("Extracted", isDirectory: true)
+
+                try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+                try FileManager.default.createDirectory(at: extractURL, withIntermediateDirectories: true)
+                defer { try? FileManager.default.removeItem(at: tempDirectory) }
+
+                let (downloadURL, response) = try await self.session.download(from: item.downloadURL)
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw UpdateError.downloadFailed
+                }
+
+                try FileManager.default.moveItem(at: downloadURL, to: zipURL)
+
+                if let expectedHash = item.sha256, !expectedHash.isEmpty {
+                    await self.updateStatus("Verifying...")
+                    let zipData = try Data(contentsOf: zipURL)
+                    let actualHash = SHA256.hash(data: zipData).map { String(format: "%02x", $0) }.joined()
+                    guard actualHash.lowercased() == expectedHash.lowercased() else {
+                        throw UpdateError.hashMismatch(expected: expectedHash, actual: actualHash)
+                    }
+                }
+
+                await self.updateStatus("Extracting...")
+                try self.unzip(zipURL: zipURL, destinationURL: extractURL)
+
+                guard let newAppURL = self.findApp(in: extractURL) else {
+                    throw UpdateError.appNotFound
+                }
+
+                await self.updateStatus("Installing...")
+                try self.clearQuarantineAttribute(at: newAppURL)
+                _ = try FileManager.default.replaceItemAt(
+                    appURL,
+                    withItemAt: newAppURL,
+                    backupItemName: nil,
+                    options: .usingNewMetadataOnly
+                )
+
+                await self.updateStatus("Relaunching...")
+                await self.relaunch(appURL: appDirectory.appendingPathComponent("CCManager.app"))
+            } catch {
+                await MainActor.run {
+                    self.canCheckForUpdates = true
+                    self.updateStatus = ""
+                }
+                await self.showUpdateError(error)
+            }
+        }
+    }
+
+    private func unzip(zipURL: URL, destinationURL: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        process.arguments = ["-oq", zipURL.path, "-d", destinationURL.path]
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            throw UpdateError.unzipFailed
+        }
+    }
+
+    private func findApp(in directory: URL) -> URL? {
+        guard let enumerator = FileManager.default.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return nil
+        }
+
+        for case let url as URL in enumerator {
+            if url.lastPathComponent == "CCManager.app" {
+                return url
+            }
+        }
+
+        return nil
+    }
+
+    private func clearQuarantineAttribute(at url: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
+        process.arguments = ["-rd", "com.apple.quarantine", url.path]
+        try process.run()
+        process.waitUntilExit()
+    }
+
+    @MainActor
+    private func relaunch(appURL: URL) {
+        let escapedPath = appURL.path.replacingOccurrences(of: "'", with: "'\\''")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 0.5; /usr/bin/open -n '\(escapedPath)'"]
+        try? process.run()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+
+    @MainActor
+    private func showUpdateAlert(_ item: UpdateFeedItem) {
+        updateWindowController?.close()
+        let controller = UpdateWindowController(
+            updateItem: item,
+            onInstall: { [weak self] in
+                self?.performUpdate(item)
+            },
+            onSkip: { [weak self] in
+                self?.updateWindowController?.closeAfterAction()
+                self?.updateWindowController = nil
+            }
         )
 
-        setupBindings()
+        updateWindowController = controller
+        controller.show()
+    }
 
-        // 检测更新是否成功安装（版本发生变化）
-        checkForUpdateSuccess()
+    @MainActor
+    private func showNoUpdateAlert() {
+        let alert = NSAlert()
+        alert.messageText = "已是最新版本"
+        alert.informativeText = "当前版本已是最新，无需更新。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好")
+        alert.runModal()
+    }
 
-        // 启动更新器
-        do {
-            try updater.start()
-        } catch {
-            print("Failed to start updater: \(error)")
+    @MainActor
+    private func showUpdateError(_ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = "更新失败"
+        alert.informativeText = "\(error.localizedDescription)\n\n请手动下载安装。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "打开下载页")
+        alert.addButton(withTitle: "取消")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(Self.releasesURL)
         }
     }
 
-    // MARK: - Private Methods
-
-    // MARK: - SPUUpdaterDelegate
-
-    func updaterWillRelaunchAfterInstalling(_ updater: SPUUpdater) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            NSApp.terminate(nil)
-        }
+    @MainActor
+    private func updateStatus(_ message: String) {
+        updateStatus = message
     }
 
-    private func setupBindings() {
-        // 使用 KVO 绑定 canCheckForUpdates 属性
-        // Sparkle 的 canCheckForUpdates 是 KVO 兼容的
-        updater.publisher(for: \.canCheckForUpdates)
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$canCheckForUpdates)
-
-        // 绑定最后检查时间
-        updater.publisher(for: \.lastUpdateCheckDate)
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$lastUpdateCheckDate)
-    }
-
-    /// 检查更新是否成功安装
-    /// 如果当前版本与上次保存的版本不同，说明刚完成更新
     private func checkForUpdateSuccess() {
         let defaults = UserDefaults.standard
         let lastVersion = defaults.string(forKey: lastInstalledVersionKey) ?? ""
@@ -227,28 +329,6 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
             updateInstalled = true
         }
 
-        // 保存当前版本
         defaults.set(currentVersion, forKey: lastInstalledVersionKey)
-    }
-
-    // MARK: - Public Methods
-
-    /// 用户手动检查更新
-    /// 会显示自定义更新弹窗
-    func checkForUpdates() {
-        guard canCheckForUpdates else { return }
-        updater.checkForUpdates()
-    }
-
-    /// 后台静默检查更新
-    /// 不会显示 UI，只在发现新版本时通知用户
-    func checkForUpdatesInBackground() {
-        updater.checkForUpdatesInBackground()
-    }
-
-    /// 重置更新周期
-    /// 在更改 feed URL 或渠道后调用
-    func resetUpdateCycle() {
-        updater.resetUpdateCycle()
     }
 }

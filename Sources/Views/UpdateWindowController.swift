@@ -1,42 +1,36 @@
 import AppKit
-import SwiftUI
-import Sparkle
 import Down
+import SwiftUI
 
-/// 从 Bundle 获取应用图标
 private var appIconImage: NSImage? {
     NSApplication.shared.applicationIconImage
 }
 
-/// 自定义更新弹窗，支持 Markdown 格式的更新内容展示
-final class UpdateWindowController: NSWindowController {
-    private let appcastItem: SUAppcastItem
+final class UpdateWindowController: NSWindowController, NSWindowDelegate {
     private let onInstall: () -> Void
     private let onSkip: () -> Void
-    private let onDismiss: () -> Void
+    private var didChooseAction = false
 
-    init(appcastItem: SUAppcastItem, onInstall: @escaping () -> Void, onSkip: @escaping () -> Void, onDismiss: @escaping () -> Void) {
-        self.appcastItem = appcastItem
+    init(updateItem: UpdateFeedItem, onInstall: @escaping () -> Void, onSkip: @escaping () -> Void) {
         self.onInstall = onInstall
         self.onSkip = onSkip
-        self.onDismiss = onDismiss
 
         let contentView = UpdateContentView(
-            appcastItem: appcastItem,
+            updateItem: updateItem,
             onInstall: onInstall,
-            onSkip: onSkip,
-            onDismiss: onDismiss
+            onSkip: onSkip
         )
         .environmentObject(ThemeManager.shared)
+        .environmentObject(UpdateManager.shared)
 
         let hostingView = NSHostingView(rootView: contentView)
-
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 420, height: 340),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
+
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.title = "Update Available"
@@ -44,6 +38,7 @@ final class UpdateWindowController: NSWindowController {
         window.center()
 
         super.init(window: window)
+        window.delegate = self
     }
 
     func show() {
@@ -51,13 +46,28 @@ final class UpdateWindowController: NSWindowController {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    func closeAfterAction() {
+        didChooseAction = true
+        close()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        if !didChooseAction {
+            didChooseAction = true
+            onSkip()
+        }
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        !(UpdateManager.shared.isInstallingUpdate)
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 }
 
-/// 用 NSTextView 显示 Down 解析的 Markdown
-struct MarkdownTextView: NSViewRepresentable {
+private struct MarkdownTextView: NSViewRepresentable {
     let markdown: String
     let textColor: NSColor
     let headingColor: NSColor
@@ -75,19 +85,19 @@ struct MarkdownTextView: NSViewRepresentable {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
-        textView.isRichText = false
+        textView.isRichText = true
         textView.usesFontPanel = false
         textView.textContainerInset = NSSize(width: 0, height: 0)
-        textView.autoresizingMask = [.width]
-
-        updateTextView(textView)
-
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.containerSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
 
         scrollView.documentView = textView
+        updateTextView(textView)
         return scrollView
     }
 
@@ -99,62 +109,51 @@ struct MarkdownTextView: NSViewRepresentable {
 
     private func updateTextView(_ textView: NSTextView) {
         let down = Down(markdownString: markdown)
-        if let nsAttr = try? down.toAttributedString() {
-            // 创建一个可变的副本
-            let mutableAttr = NSMutableAttributedString(attributedString: nsAttr)
-            let fullRange = NSRange(location: 0, length: mutableAttr.length)
 
-            // 遍历所有属性，应用自定义颜色
-            mutableAttr.enumerateAttributes(in: fullRange) { attrs, range, _ in
-                // 检查是否是标题（通过检查字体 weight 或 size）
-                if let font = attrs[.font] as? NSFont {
-                    let isBold = font.fontDescriptor.symbolicTraits.contains(.bold)
-                    if isBold && font.pointSize > monoFont.pointSize {
-                        // 标题使用 heading 颜色
-                        mutableAttr.addAttribute(.foregroundColor, value: headingColor, range: range)
-                    } else {
-                        // 其他内容使用 text 颜色
-                        mutableAttr.addAttribute(.foregroundColor, value: textColor, range: range)
-                    }
-                    // 统一字体为 monospaced
-                    let newFont = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: font.pointSize > 14 ? .bold : .regular)
-                    mutableAttr.addAttribute(.font, value: newFont, range: range)
-                } else {
-                    mutableAttr.addAttribute(.font, value: monoFont, range: range)
-                    mutableAttr.addAttribute(.foregroundColor, value: textColor, range: range)
-                }
-            }
-
-            // 移除列表前缀符号（Down 渲染的 • 等标记）
-            let bulletPattern = "^\\s*[•·▪▪]\\s*"
-            if let regex = try? NSRegularExpression(pattern: bulletPattern, options: .anchorsMatchLines) {
-                let plainText = mutableAttr.mutableString
-                regex.replaceMatches(in: plainText, options: [], range: fullRange, withTemplate: "")
-            }
-
-            textView.textStorage?.setAttributedString(mutableAttr)
-        } else {
+        guard let attributedString = try? down.toAttributedString() else {
             textView.string = markdown
+            textView.font = monoFont
+            textView.textColor = textColor
+            return
         }
+
+        let mutableString = NSMutableAttributedString(attributedString: attributedString)
+        let fullRange = NSRange(location: 0, length: mutableString.length)
+
+        mutableString.enumerateAttributes(in: fullRange) { attributes, range, _ in
+            let existingFont = attributes[.font] as? NSFont ?? monoFont
+            let isHeading = existingFont.pointSize > monoFont.pointSize || existingFont.fontDescriptor.symbolicTraits.contains(.bold)
+            let font = NSFont.monospacedSystemFont(
+                ofSize: isHeading ? max(existingFont.pointSize, 13) : monoFont.pointSize,
+                weight: isHeading ? .semibold : .regular
+            )
+
+            mutableString.addAttribute(.font, value: font, range: range)
+            mutableString.addAttribute(.foregroundColor, value: isHeading ? headingColor : textColor, range: range)
+        }
+
+        textView.textStorage?.setAttributedString(mutableString)
     }
 }
 
-/// 更新内容视图
-struct UpdateContentView: View {
-    let appcastItem: SUAppcastItem
+private struct UpdateContentView: View {
+    let updateItem: UpdateFeedItem
     let onInstall: () -> Void
     let onSkip: () -> Void
-    let onDismiss: () -> Void
 
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var updateManager: UpdateManager
 
     private var monoFont: NSFont {
         NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
     }
 
+    private var isInstalling: Bool {
+        updateManager.isInstallingUpdate
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack(spacing: 12) {
                 if let iconImage = appIconImage {
                     Image(nsImage: iconImage)
@@ -172,7 +171,7 @@ struct UpdateContentView: View {
                         .font(.system(size: 15, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.primary)
 
-                    Text("Version \(appcastItem.displayVersionString)")
+                    Text("Version \(updateItem.shortVersion)")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
@@ -184,17 +183,16 @@ struct UpdateContentView: View {
 
             Divider()
 
-            // Release Notes
-            if let releaseNotes = appcastItem.itemDescription, !releaseNotes.isEmpty {
+            if let releaseNotes = updateItem.releaseNotes, !releaseNotes.isEmpty {
                 MarkdownTextView(
                     markdown: releaseNotes,
                     textColor: .labelColor,
                     headingColor: .labelColor,
                     monoFont: monoFont
                 )
-                .frame(maxHeight: .infinity)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                    .frame(maxHeight: .infinity)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
             } else {
                 Text("No release notes available.")
                     .font(.system(size: 12, design: .monospaced))
@@ -206,41 +204,59 @@ struct UpdateContentView: View {
 
             Divider()
 
-            // Actions
             HStack(spacing: 12) {
-                Button {
-                    onSkip()
-                } label: {
-                    Text("Skip This Version")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                if isInstalling {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+
+                        Text(updateManager.updateStatus)
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(height: 32)
+                } else {
+                    Button {
+                        onSkip()
+                    } label: {
+                        Text("Skip This Version")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+
+                    Button {
+                        onInstall()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 12, weight: .medium))
+                            Text("Install Update")
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(themeManager.brandColor)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if isInstalling {
+                    Spacer()
+
+                    Text("Please wait")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                Button {
-                    onInstall()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 12, weight: .medium))
-                        Text("Install Update")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(themeManager.brandColor)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
         }
         .frame(width: 420)
         .background(Color(nsColor: .windowBackgroundColor))
-        .environmentObject(ThemeManager.shared)
     }
 }

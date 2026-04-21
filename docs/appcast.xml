@@ -1,46 +1,25 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
         <title>CCManager Updates</title>
         <link>https://github.com/zwmmm/CCManager/releases</link>
         <description>CCManager update feed</description>
-        <language>en</language>
+        <language>zh-cn</language>
         <item>
-            <title>1.5.0</title>
-            <pubDate>Sat, 18 Apr 2026 13:26:06 +0800</pubDate>
-            <sparkle:version>19</sparkle:version>
-            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <title>CCManager 1.8.1</title>
+            <description><![CDATA[
+### Updates
+- Current public release.
+            ]]></description>
+            <pubDate>Tue, 21 Apr 2026 00:00:00 +0800</pubDate>
+            <enclosure
+                url="https://github.com/zwmmm/CCManager/releases/download/v1.8.1/CCManager.app.zip"
+                sparkle:version="24"
+                sparkle:shortVersionString="1.8.1"
+                length="0"
+                type="application/octet-stream"
+            />
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/zwmmm/CCManager/releases/download/v1.5.0/CCManager-v1.5.0.zip" length="5780603" type="application/octet-stream"/>
-          <description><![CDATA[]]></description>
-  <description><![CDATA[### Features
-
-- Add macOS auto-start functionality
-
-### Others
-
-- Add research document for auto-start feature
-]]></description>
-</item>
-        <item>
-            <title>1.4.1</title>
-            <pubDate>Fri, 17 Apr 2026 15:52:41 +0800</pubDate>
-            <sparkle:version>18</sparkle:version>
-            <sparkle:shortVersionString>1.4.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
-            <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/zwmmm/CCManager/releases/download/v1.4.1/CCManager-v1.4.1.dmg" length="4345460" type="application/octet-stream" sparkle:edSignature="Ma9lZecu+adlHC8sNEMP0TkXz+C5w+8dmj4bMHmP6nz+PmpTCb9vtarq7DO0IRFmKitnstQjPGi5e7tF2HefCg=="/>
-        </item>
-        <item>
-            <title>Release v1.4.0</title>
-            <sparkle:version>1.4.0</sparkle:version>
-            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
-            <sparkle:releaseNotesLink>https://github.com/zwmmm/CCManager/blob/main/release-notes.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/zwmmm/CCManager/releases/download/v1.4.0/CCManager-v1.4.0.dmg" sparkle:path="CCManager-v1.4.0.dmg" type="application/octet-stream" length="4345454"/>
         </item>
     </channel>
 </rss>

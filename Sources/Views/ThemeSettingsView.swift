@@ -401,8 +401,14 @@ struct ThemeSettingsView: View {
                 updateManager.checkForUpdates()
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 10, weight: .medium))
+                    if updateManager.isChecking {
+                        ProgressView()
+                            .scaleEffect(0.55)
+                            .frame(width: 10, height: 10)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10, weight: .medium))
+                    }
                     Text("Check for Updates")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                 }
