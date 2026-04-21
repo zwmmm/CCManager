@@ -1,15 +1,9 @@
-### Features
-
-- Replace Sparkle with a custom app update flow backed by GitHub Release appcast assets
-- Add a custom Markdown update window with install progress states and automatic relaunch
-- Add startup and periodic background update checks
-
 ### Bug Fixes
 
-- Avoid cached appcast responses during update checks
-- Improve app relaunch reliability after replacing the application bundle
+- Improve CLI path resolution to check target path when which command misses it
+- Fix LaunchAtLoginManager.refreshStatusAsync() to return enabled status
+- Fix ThemeSettingsView launch at login toggle with proper local state management to avoid sync issues
 
 ### Others
 
-- Update the release workflow to generate appcast.xml as a release artifact
-- Update release documentation and remove obsolete Sparkle signing requirements
+- Add unit test for resolveInstalledCLIPath function
