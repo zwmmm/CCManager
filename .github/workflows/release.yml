@@ -100,7 +100,7 @@ jobs:
           pub_date = format_datetime(datetime.now(timezone.utc))
           download_url = f"https://github.com/zwmmm/CCManager/releases/download/{tag}/CCManager.app.zip"
 
-          Path("docs/appcast.xml").write_text(f'''<?xml version="1.0" encoding="utf-8"?>
+          Path("build/appcast.xml").write_text(f'''<?xml version="1.0" encoding="utf-8"?>
           <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
               <channel>
                   <title>CCManager Updates</title>
@@ -133,7 +133,7 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
             build/Build/Products/Release/CCManager.app.zip
             build/Build/Products/Release/ccmanager
-            docs/appcast.xml
+            build/appcast.xml
           body_path: ${{ github.workspace }}/release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
