@@ -31,12 +31,14 @@ final class LaunchAtLoginManager {
     }
 
     /// Refresh status asynchronously for UI sync.
-    func refreshStatusAsync() async {
+    @discardableResult
+    func refreshStatusAsync() async -> Bool {
         let status = SMAppService.mainApp.status
         let enabled = (status == .enabled)
         if isEnabled != enabled {
             isEnabled = enabled
         }
+        return enabled
     }
 
     /// Enable or disable launch at login.
