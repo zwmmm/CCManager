@@ -3,6 +3,7 @@ import Foundation
 enum ProviderType: String, CaseIterable, Identifiable, Codable {
     case claudeCode = "Claude Code"
     case codex = "Codex"
+    case codexOAuth = "Codex OAuth"
 
     var id: String { rawValue }
 }
