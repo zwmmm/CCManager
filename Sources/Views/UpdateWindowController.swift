@@ -132,6 +132,19 @@ private struct MarkdownTextView: NSViewRepresentable {
             mutableString.addAttribute(.foregroundColor, value: isHeading ? headingColor : textColor, range: range)
         }
 
+        // Remove list item prefixes (e.g., "1.", "2.", "•", "-")
+        if let plainText = mutableString.mutableString as NSMutableString? {
+            let patterns = [
+                "^\\s*\\d+\\.\\s*",  // numbered list: "1.", "2."
+                "^\\s*[•·▪▫]\\s*",   // bullet list: "•", "·"
+            ]
+            for pattern in patterns {
+                if let regex = try? NSRegularExpression(pattern: pattern, options: .anchorsMatchLines) {
+                    regex.replaceMatches(in: plainText, options: [], range: fullRange, withTemplate: "")
+                }
+            }
+        }
+
         textView.textStorage?.setAttributedString(mutableString)
     }
 }

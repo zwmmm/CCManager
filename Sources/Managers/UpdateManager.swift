@@ -210,10 +210,17 @@ final class UpdateManager: NSObject, ObservableObject {
                     options: .usingNewMetadataOnly
                 )
 
+                await MainActor.run {
+                    self.updateWindowController?.closeAfterAction()
+                    self.updateWindowController = nil
+                }
+
                 await self.updateStatus("Relaunching...")
                 await self.relaunch(appURL: appDirectory.appendingPathComponent("CCManager.app"))
             } catch {
                 await MainActor.run {
+                    self.updateWindowController?.closeAfterAction()
+                    self.updateWindowController = nil
                     self.canCheckForUpdates = true
                     self.updateStatus = ""
                 }
