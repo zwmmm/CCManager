@@ -28,14 +28,5 @@
     <string>Copyright 2024. All rights reserved.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <!-- Sparkle Configuration -->
-    <key>SUFeedURL</key>
-    <string>https://github.com/zwmmm/CCManager/releases/latest/download/appcast.xml</string>
-    <key>SUPublicEDKey</key>
-    <string>EJllfUC6CU6xOGKPM8/3T8TdfsAWvXLNocBaG7Lhsyc=</string>
-    <key>SUEnableAutomaticChecks</key>
-    <true/>
-    <key>SUScheduledCheckInterval</key>
-    <integer>3600</integer>
 </dict>
 </plist>

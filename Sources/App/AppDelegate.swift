@@ -48,6 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window?.makeKeyAndOrderFront(nil)
 
         NSApp.activate(ignoringOtherApps: true)
+        UpdateManager.shared.startAutomaticUpdateChecks()
     }
 
     @objc private func openSettings() {

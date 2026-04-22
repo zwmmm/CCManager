@@ -47,7 +47,7 @@ Manager 单例 (Sources/Managers/):
   - StatusBarController    菜单栏状态和右键菜单
   - LaunchAtLoginManager     SMAppService 开机自启
   - ThemeManager             主题配色管理
-  - UpdateManager            Sparkle 自动更新
+  - UpdateManager            自定义应用热更新
   - CLIInstallationManager   CCManagerCLI 安装/卸载
   - EditorManager            外部编辑器启动
 ```

@@ -11,6 +11,12 @@ struct ThemeSettingsView: View {
 
     @State private var showEditorPicker = false
     @State private var selectedCategory: ChineseColor.ColorCategory = .group0
+    @State private var launchAtLoginEnabled = {
+        if #available(macOS 13.0, *) {
+            return LaunchAtLoginManager.shared.isEnabled
+        }
+        return false
+    }()
 
     // MARK: - Design Tokens
     private let horizontalPadding: CGFloat = 18
@@ -141,8 +147,13 @@ struct ThemeSettingsView: View {
                                     .foregroundStyle(.primary)
                                 Spacer()
                                 Toggle("", isOn: Binding(
-                                    get: { LaunchAtLoginManager.shared.isEnabled },
-                                    set: { LaunchAtLoginManager.shared.setEnabled($0) }
+                                    get: { launchAtLoginEnabled },
+                                    set: { newValue in
+                                        launchAtLoginEnabled = newValue
+                                        if !LaunchAtLoginManager.shared.setEnabled(newValue) {
+                                            launchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
+                                        }
+                                    }
                                 ))
                                 .toggleStyle(.switch)
                                 .labelsHidden()
@@ -221,6 +232,19 @@ struct ThemeSettingsView: View {
         }
         .frame(width: 340)
         .background(Color(nsColor: .windowBackgroundColor))
+        .task {
+            refreshInstallationStates()
+        }
+    }
+
+    private func refreshInstallationStates() {
+        cliInstaller.checkInstallationStatus()
+
+        if #available(macOS 13.0, *) {
+            Task {
+                launchAtLoginEnabled = await LaunchAtLoginManager.shared.refreshStatusAsync()
+            }
+        }
     }
 
     // MARK: - Color Picker Grid
@@ -401,8 +425,14 @@ struct ThemeSettingsView: View {
                 updateManager.checkForUpdates()
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 10, weight: .medium))
+                    if updateManager.isChecking {
+                        ProgressView()
+                            .scaleEffect(0.55)
+                            .frame(width: 10, height: 10)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10, weight: .medium))
+                    }
                     Text("Check for Updates")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                 }

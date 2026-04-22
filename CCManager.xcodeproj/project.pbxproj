@@ -22,11 +22,13 @@
 		50998FB3E772C2E1D5B3167A /* CodexOAuthLoginParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */; };
 		51069F32AE816D13AB31CCE5 /* OAuthLoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E711AE8FC5501781E7D5165D /* OAuthLoginSheet.swift */; };
 		582AC318E5EE571D014BFA3B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1337C4E3B6B34325B2491F3B /* AppDelegate.swift */; };
+		6E6932745C7259A5B0C200AB /* UpdateFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */; };
 		6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */; };
 		75E0E7A60936364918D1C78D /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6057F4D68D8F944EFE6D9BE /* ToastView.swift */; };
-		777BD8376621B35EAF543A4F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 171E268F104B15D8AEE7F408 /* Sparkle */; };
+		777BD8376621B35EAF543A4F /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = F624A892D11177B736EB4699 /* Down */; };
 		7A422159396D0E67C5E8785F /* CodexOAuthLoginParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */; };
 		7A425901E5AC1F27D6C4AB59 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */; };
+		7FECEFE6C6D7019898624980 /* CLIInstallationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53871DD10B99BB2923044859 /* CLIInstallationManagerTests.swift */; };
 		82A235B1D950734A087F1775 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = EAFEEE32F704681488ECF5EE /* SQLite */; };
 		8761137C385660B7776D7F44 /* ProviderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE708FAEB509391E76CCD50F /* ProviderListView.swift */; };
 		877C06474BF152A5D5F12A99 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A2F4FA4D5EF3E0EAC27266 /* ContentView.swift */; };
@@ -34,9 +36,11 @@
 		9BD5B7A6E4681CB21D3B6331 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9E77A4C1C64E103E602C313A /* SQLite */; };
 		A3F5B5903C75CE5856DC912B /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5634C4499FEC3FA34C30728D /* main.swift */; };
 		ABC0DF4512367832C60E265C /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97CB82053021720EA6C0CFF /* main.swift */; };
+		AD8EE5CB43ACAECE2E16D967 /* UpdateFeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325040860F9187C754EE79FC /* UpdateFeedTests.swift */; };
 		BA4EB14C5D0B3FDEA68360D9 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129EC2323C4B2F104B519350 /* Database.swift */; };
 		C30E163DC68D313AA0441540 /* MingcuteClaudeFill.png in Resources */ = {isa = PBXBuildFile; fileRef = 4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */; };
 		C3325CBB7F766C604B8A475D /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7596402EB70948CBE259945 /* ConfigWriter.swift */; };
+		C8D3F8A36107532E88592DD5 /* UpdateFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */; };
 		CCD1BC5FAA3549B8DFF6270A /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */; };
 		D3383F66529ADD615FF1786B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA0D519C657FBE143B7067CE /* Assets.xcassets */; };
 		D78DF66E643AA833FE6F2E89 /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8130E2B4C43CCB2C689D79 /* Provider.swift */; };
@@ -46,9 +50,18 @@
 		E98957DB30B148DD19CAEB02 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5168D0E333680BDBD6307C /* LaunchAtLoginManager.swift */; };
 		EC5C42272DDD5B6C3CDB6B0C /* UpdateWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */; };
 		F2FD8A2983C4D51FCE3BD0D1 /* CollapsibleGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */; };
-		F903F54F1755334827B29D7D /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = F624A892D11177B736EB4699 /* Down */; };
 		FFFE98F307FE044BE5C9116C /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7596402EB70948CBE259945 /* ConfigWriter.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E0B70FC19DBBBD003AB79E20 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1A77CEE4164A68457A5E8D6D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 262190C1386E7B9B45497DE3;
+			remoteInfo = CCManager;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		03F35BF8EA640544D49399E6 /* ProviderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderStore.swift; sourceTree = "<group>"; };
@@ -57,12 +70,16 @@
 		1337C4E3B6B34325B2491F3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarCache.swift; sourceTree = "<group>"; };
 		1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexOAuthLoginParser.swift; sourceTree = "<group>"; };
+		22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFeed.swift; sourceTree = "<group>"; };
+		325040860F9187C754EE79FC /* UpdateFeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFeedTests.swift; sourceTree = "<group>"; };
+		3CCADBDCAD4DE4ED735BAB45 /* CCManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CCManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3DE85ED4513E805BC80FB1D2 /* ColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
 		3E02E6929DF19FE02DAF2405 /* CLIInstallationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIInstallationManager.swift; sourceTree = "<group>"; };
 		3E18A9A48BC11E41031CCB5C /* UpdateWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateWindowController.swift; sourceTree = "<group>"; };
 		435D5F8703DDDA83BF712003 /* CollapsibleGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapsibleGroup.swift; sourceTree = "<group>"; };
 		47E81B53F3350B368B416052 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		4F10AE76B53A80E9FF8D4980 /* MingcuteClaudeFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MingcuteClaudeFill.png; sourceTree = "<group>"; };
+		53871DD10B99BB2923044859 /* CLIInstallationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIInstallationManagerTests.swift; sourceTree = "<group>"; };
 		5634C4499FEC3FA34C30728D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5E8130E2B4C43CCB2C689D79 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		69C59CDE979907DB909860DF /* EditorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorManager.swift; sourceTree = "<group>"; };
@@ -91,8 +108,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9BD5B7A6E4681CB21D3B6331 /* SQLite in Frameworks */,
-				777BD8376621B35EAF543A4F /* Sparkle in Frameworks */,
-				F903F54F1755334827B29D7D /* Down in Frameworks */,
+				777BD8376621B35EAF543A4F /* Down in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,6 +136,16 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
+		4CED2CCE4FFE46A7E524B585 /* CCManagerTests */ = {
+			isa = PBXGroup;
+			children = (
+				53871DD10B99BB2923044859 /* CLIInstallationManagerTests.swift */,
+				325040860F9187C754EE79FC /* UpdateFeedTests.swift */,
+			);
+			name = CCManagerTests;
+			path = Tests/CCManagerTests;
+			sourceTree = "<group>";
+		};
 		5597BABAC8FFC28B446FC269 /* CCManagerCLI */ = {
 			isa = PBXGroup;
 			children = (
@@ -134,6 +160,7 @@
 			children = (
 				BFED1EC577CE6AFFD3CA1E4C /* CCManager.app */,
 				AA95335D68764C7632B97631 /* CCManagerCLI */,
+				3CCADBDCAD4DE4ED735BAB45 /* CCManagerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,6 +191,7 @@
 				129EC2323C4B2F104B519350 /* Database.swift */,
 				EAED632FE433248AB922FB55 /* OAuthLoginManager.swift */,
 				A646992F7245FE13600EC45D /* ProviderTester.swift */,
+				22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -220,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				5597BABAC8FFC28B446FC269 /* CCManagerCLI */,
+				4CED2CCE4FFE46A7E524B585 /* CCManagerTests */,
 				C609C3E348B7092D39458E48 /* Resources */,
 				478A665D8B6F9D86F35184DB /* Sources */,
 				6416ED52C932CB4AB0A689DE /* Products */,
@@ -263,12 +292,29 @@
 			name = CCManager;
 			packageProductDependencies = (
 				9E77A4C1C64E103E602C313A /* SQLite */,
-				171E268F104B15D8AEE7F408 /* Sparkle */,
 				F624A892D11177B736EB4699 /* Down */,
 			);
 			productName = CCManager;
 			productReference = BFED1EC577CE6AFFD3CA1E4C /* CCManager.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8C1A073CAD87A073439DD4BD /* CCManagerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C205E5B5A848C86BDA48B72B /* Build configuration list for PBXNativeTarget "CCManagerTests" */;
+			buildPhases = (
+				8205CA4F8004B23CD2180AF0 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3B465701C29C5594F65F16C9 /* PBXTargetDependency */,
+			);
+			name = CCManagerTests;
+			packageProductDependencies = (
+			);
+			productName = CCManagerTests;
+			productReference = 3CCADBDCAD4DE4ED735BAB45 /* CCManagerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -285,6 +331,9 @@
 					262190C1386E7B9B45497DE3 = {
 						ProvisioningStyle = Manual;
 					};
+					8C1A073CAD87A073439DD4BD = {
+						ProvisioningStyle = Manual;
+					};
 				};
 			};
 			buildConfigurationList = 206A39FB27A5AAE21293B88B /* Build configuration list for PBXProject "CCManager" */;
@@ -299,7 +348,6 @@
 			packageReferences = (
 				9443B85D7B7729A6E0760A18 /* XCRemoteSwiftPackageReference "Down" */,
 				CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */,
-				5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6416ED52C932CB4AB0A689DE /* Products */;
@@ -308,6 +356,7 @@
 			targets = (
 				262190C1386E7B9B45497DE3 /* CCManager */,
 				0BFDF73206084716AE3BD82E /* CCManagerCLI */,
+				8C1A073CAD87A073439DD4BD /* CCManagerTests */,
 			);
 		};
 /* End PBXProject section */
@@ -336,6 +385,7 @@
 				467446BCB8B11F703836B068 /* OAuthLoginManager.swift in Sources */,
 				D78DF66E643AA833FE6F2E89 /* Provider.swift in Sources */,
 				0B02BDD6DD3FB782B98324AB /* ProviderTester.swift in Sources */,
+				6E6932745C7259A5B0C200AB /* UpdateFeed.swift in Sources */,
 				A3F5B5903C75CE5856DC912B /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -368,13 +418,31 @@
 				0B3208F764F054342083ABC9 /* ThemeManager.swift in Sources */,
 				6FD279FEABB70888CF19C6E0 /* ThemeSettingsView.swift in Sources */,
 				75E0E7A60936364918D1C78D /* ToastView.swift in Sources */,
+				C8D3F8A36107532E88592DD5 /* UpdateFeed.swift in Sources */,
 				E6A0856C72AD63B47B4F6A68 /* UpdateManager.swift in Sources */,
 				EC5C42272DDD5B6C3CDB6B0C /* UpdateWindowController.swift in Sources */,
 				ABC0DF4512367832C60E265C /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8205CA4F8004B23CD2180AF0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7FECEFE6C6D7019898624980 /* CLIInstallationManagerTests.swift in Sources */,
+				AD8EE5CB43ACAECE2E16D967 /* UpdateFeedTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3B465701C29C5594F65F16C9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 262190C1386E7B9B45497DE3 /* CCManager */;
+			targetProxy = E0B70FC19DBBBD003AB79E20 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		0E9E52BFCA4CC656BF8A7820 /* Release */ = {
@@ -389,6 +457,24 @@
 				SDKROOT = macosx;
 			};
 			name = Release;
+		};
+		171EBDA729698B2D693C2E23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ccmanager.CCManagerTests;
+				PRODUCT_NAME = CCManagerTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CCManager.app/Contents/MacOS/CCManager";
+			};
+			name = Debug;
 		};
 		379FFB7A7C92E4EED85FAABE /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -426,7 +512,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 28;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -446,7 +532,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.8.1;
+				MARKETING_VERSION = 1.9.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -507,7 +593,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 28;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -521,7 +607,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.8.1;
+				MARKETING_VERSION = 1.9.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = CCManager;
@@ -541,6 +627,24 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ccmanager.CCManagerCLI;
 				PRODUCT_NAME = ccmanager;
 				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		CCBF112E42BB35E788CD55C5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ccmanager.CCManagerTests;
+				PRODUCT_NAME = CCManagerTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CCManager.app/Contents/MacOS/CCManager";
 			};
 			name = Release;
 		};
@@ -586,17 +690,18 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		C205E5B5A848C86BDA48B72B /* Build configuration list for PBXNativeTarget "CCManagerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				171EBDA729698B2D693C2E23 /* Debug */,
+				CCBF112E42BB35E788CD55C5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.0;
-			};
-		};
 		9443B85D7B7729A6E0760A18 /* XCRemoteSwiftPackageReference "Down" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/johnxnguyen/Down.git";
@@ -616,11 +721,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		171E268F104B15D8AEE7F408 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5F78DE6A09B8604B1198FBCE /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
 		9E77A4C1C64E103E602C313A /* SQLite */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CDCF8DA58E018D31128EB82A /* XCRemoteSwiftPackageReference "SQLite.swift" */;

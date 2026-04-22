@@ -66,7 +66,7 @@ jobs:
       - name: Package App
         run: |
           cd build/Build/Products/Release
-          zip -r CCManager-${{ github.ref_name }}.zip CCManager.app
+          ditto -c -k --keepParent CCManager.app CCManager.app.zip
 
       - name: Create DMG
         run: |
@@ -79,42 +79,61 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
           rm -rf dmg_temp
 
-      - name: Download Sparkle Tools
-        run: |
-          SPARKLE_VERSION="2.6.0"
-          curl -L -o sparkle.tar.xz \
-            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
-          tar -xf sparkle.tar.xz
-
       - name: Generate Appcast
-        env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
-            echo "Error: SPARKLE_PRIVATE_KEY secret is not set"
-            exit 1
-          fi
-          echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
-            --ed-key-file - \
-            --download-url-prefix "https://github.com/zwmmm/CCManager/releases/download/${{ github.ref_name }}/" \
-            -o docs/appcast.xml \
-            build/Build/Products/Release/
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          from email.utils import format_datetime
+          from pathlib import Path
+          import hashlib
+          import os
+          import re
 
-      - name: Inject Release Notes
-        run: |
-          # Read release-notes.md and escape for XML, preserving newlines
-          RELEASE_NOTES=$(awk '{gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); printf "%s\\n", $0}' release-notes.md | sed 's/\\n$//')
-          # Use perl to handle multiline replacement in appcast.xml
-          perl -0777 -i -pe 's|</item>|  <description><![CDATA['"${RELEASE_NOTES}"']]></description>\n</item>|' docs/appcast.xml
+          tag = os.environ["GITHUB_REF_NAME"]
+          version = tag[1:] if tag.startswith("v") else tag
+          project = Path("project.yml").read_text()
+          build = re.search(r'CURRENT_PROJECT_VERSION:\s*"([^"]+)"', project).group(1)
+          notes = Path("release-notes.md").read_text().replace("]]>", "]]]]><![CDATA[>")
+          zip_path = Path("build/Build/Products/Release/CCManager.app.zip")
+          sha256 = hashlib.sha256(zip_path.read_bytes()).hexdigest()
+          length = zip_path.stat().st_size
+          pub_date = format_datetime(datetime.now(timezone.utc))
+          download_url = f"https://github.com/zwmmm/CCManager/releases/download/{tag}/CCManager.app.zip"
+
+          Path("build/appcast.xml").write_text(f'''<?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+              <channel>
+                  <title>CCManager Updates</title>
+                  <link>https://github.com/zwmmm/CCManager/releases</link>
+                  <description>CCManager update feed</description>
+                  <language>zh-cn</language>
+                  <item>
+                      <title>CCManager {version}</title>
+                      <description><![CDATA[{notes}]]></description>
+                      <pubDate>{pub_date}</pubDate>
+                      <enclosure
+                          url="{download_url}"
+                          sparkle:version="{build}"
+                          sparkle:shortVersionString="{version}"
+                          sparkle:sha256="{sha256}"
+                          length="{length}"
+                          type="application/octet-stream"
+                      />
+                      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+                  </item>
+              </channel>
+          </rss>
+          ''')
+          PY
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             CCManager-${{ github.ref_name }}.dmg
-            build/Build/Products/Release/CCManager-${{ github.ref_name }}.zip
+            build/Build/Products/Release/CCManager.app.zip
             build/Build/Products/Release/ccmanager
-            docs/appcast.xml
+            build/appcast.xml
           body_path: ${{ github.workspace }}/release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}

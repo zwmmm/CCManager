@@ -35,12 +35,17 @@ final class CLIInstallationManager: ObservableObject {
             task.waitUntilExit()
 
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let whichPath = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let installedPath = Self.resolveInstalledCLIPath(
+                whichPath: whichPath,
+                targetPath: targetPath,
+                fileExists: FileManager.default.fileExists(atPath:)
+            )
 
             DispatchQueue.main.async {
-                self.isInstalled = (path != nil && !path!.isEmpty)
+                self.isInstalled = installedPath != nil
                 self.installStatus = self.isInstalled
-                    ? "CLI is installed at \(path ?? self.targetPath)"
+                    ? "CLI is installed at \(installedPath ?? self.targetPath)"
                     : "CLI is not installed"
             }
         } catch {
@@ -49,6 +54,22 @@ final class CLIInstallationManager: ObservableObject {
                 self.installStatus = "Failed to check installation status"
             }
         }
+    }
+
+    static func resolveInstalledCLIPath(
+        whichPath: String?,
+        targetPath: String,
+        fileExists: (String) -> Bool
+    ) -> String? {
+        if let whichPath, !whichPath.isEmpty {
+            return whichPath
+        }
+
+        if fileExists(targetPath) {
+            return targetPath
+        }
+
+        return nil
     }
 
     /// Install CLI to PATH by downloading from GitHub
