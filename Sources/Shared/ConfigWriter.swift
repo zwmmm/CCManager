@@ -3,8 +3,9 @@ import Foundation
 final class ConfigWriter {
     static let shared = ConfigWriter()
 
-    private let fileManager = FileManager.default
-    private let home = URL(fileURLWithPath: NSHomeDirectory())
+    private let fileManager: FileManager
+    private let home: URL
+    private let currentDate: () -> Date
 
     // MARK: - Claude Code paths
     private var claudeDir: URL { home.appendingPathComponent(".claude") }
@@ -14,7 +15,17 @@ final class ConfigWriter {
     private var codexDir: URL { home.appendingPathComponent(".codex") }
     private var codexConfig: URL { codexDir.appendingPathComponent("config.toml") }
 
-    private init() {}
+    private init() {
+        self.fileManager = .default
+        self.home = URL(fileURLWithPath: NSHomeDirectory())
+        self.currentDate = Date.init
+    }
+
+    init(fileManager: FileManager = .default, home: URL, currentDate: @escaping () -> Date = Date.init) {
+        self.fileManager = fileManager
+        self.home = home
+        self.currentDate = currentDate
+    }
 
     // MARK: - Public dispatch
 
@@ -98,14 +109,14 @@ final class ConfigWriter {
         auth["auth_mode"] = "chatgpt"
         auth["OPENAI_API_KEY"] = NSNull()
 
-        var tokens: [String: Any] = [
+        let tokens: [String: Any] = [
             "id_token": provider.oauthIdToken ?? "",
             "access_token": provider.oauthAccessToken ?? "",
             "refresh_token": provider.oauthRefreshToken ?? "",
             "account_id": provider.oauthAccountId ?? ""
         ]
         auth["tokens"] = tokens
-        auth["last_refresh"] = ISO8601DateFormatter().string(from: Date())
+        auth["last_refresh"] = ISO8601DateFormatter().string(from: currentDate())
 
         let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
         try authData.write(to: authUrl, options: .atomic)

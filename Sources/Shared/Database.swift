@@ -31,22 +31,31 @@ final class Database {
     private let oauthDisplayNameColumn = Expression<String?>("oauth_display_name")
 
     private init() {
-        setupDatabase()
-    }
-
-    private func setupDatabase() {
         do {
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            let appFolder = appSupport.appendingPathComponent("CCManager", isDirectory: true)
-            try FileManager.default.createDirectory(at: appFolder, withIntermediateDirectories: true)
-            let dbPath = appFolder.appendingPathComponent("providers.sqlite").path
-
-            db = try Connection(dbPath)
-            try createTable()
-            try migrateIfNeeded()
+            try setupDatabase(at: Self.defaultDatabaseURL())
         } catch {
             print("Database setup error: \(error)")
         }
+    }
+
+    init(databaseURL: URL) throws {
+        try setupDatabase(at: databaseURL)
+    }
+
+    private static func defaultDatabaseURL() -> URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport
+            .appendingPathComponent("CCManager", isDirectory: true)
+            .appendingPathComponent("providers.sqlite")
+    }
+
+    private func setupDatabase(at databaseURL: URL) throws {
+        let dbFolder = databaseURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: dbFolder, withIntermediateDirectories: true)
+
+        db = try Connection(databaseURL.path)
+        try createTable()
+        try migrateIfNeeded()
     }
 
     private func createTable() throws {
@@ -123,11 +132,12 @@ final class Database {
             guard let self = self else { return }
             do {
                 for row in try db.prepare(self.providersTable.order(self.sortOrderColumn.asc)) {
+                    let storedApiKey = row[self.apiKeyColumn]
                     let provider = Provider(
                         id: UUID(uuidString: row[self.idColumn]) ?? UUID(),
                         name: row[self.nameColumn],
                         type: ProviderType(rawValue: row[self.typeColumn]) ?? .claudeCode,
-                        apiKey: row[self.apiKeyColumn],
+                        apiKey: self.decodedApiKey(storedApiKey),
                         baseUrl: row[self.baseUrlColumn],
                         model: row[self.modelColumn],
                         thinkingModel: row[self.thinkingModelColumn],
@@ -161,7 +171,7 @@ final class Database {
             idColumn <- provider.id.uuidString,
             nameColumn <- provider.name,
             typeColumn <- provider.type.rawValue,
-            apiKeyColumn <- provider.apiKey,
+            apiKeyColumn <- encodedApiKey(for: provider),
             baseUrlColumn <- provider.baseUrl,
             modelColumn <- provider.model,
             thinkingModelColumn <- provider.thinkingModel,
@@ -186,7 +196,7 @@ final class Database {
         try db.run(row.update(
             nameColumn <- provider.name,
             typeColumn <- provider.type.rawValue,
-            apiKeyColumn <- provider.apiKey,
+            apiKeyColumn <- encodedApiKey(for: provider),
             baseUrlColumn <- provider.baseUrl,
             modelColumn <- provider.model,
             thinkingModelColumn <- provider.thinkingModel,
@@ -214,8 +224,9 @@ final class Database {
     func setActiveProvider(id: UUID, type: ProviderType) throws {
         guard let db = db else { throw DatabaseError.notConnected }
 
-        // Deactivate all providers of the same type
-        try db.run(providersTable.filter(typeColumn == type.rawValue).update(isActiveColumn <- false))
+        // Codex API-key and OAuth providers write to the same Codex config.
+        let activeTypes = activeTypeRawValues(for: type)
+        try db.run(providersTable.filter(activeTypes.contains(typeColumn)).update(isActiveColumn <- false))
 
         // Activate selected
         let row = providersTable.filter(idColumn == id.uuidString)
@@ -228,6 +239,29 @@ final class Database {
 
     func getActiveProvider(forType type: ProviderType) -> Provider? {
         return loadAllProviders().first { $0.type == type && $0.isActive }
+    }
+
+    private func activeTypeRawValues(for type: ProviderType) -> [String] {
+        switch type {
+        case .codex, .codexOAuth:
+            return [ProviderType.codex.rawValue, ProviderType.codexOAuth.rawValue]
+        case .claudeCode:
+            return [type.rawValue]
+        }
+    }
+
+    private func encodedApiKey(for provider: Provider) -> String? {
+        if provider.type == .codexOAuth {
+            return ""
+        }
+        return provider.apiKey
+    }
+
+    private func decodedApiKey(_ storedApiKey: String?) -> String? {
+        guard let storedApiKey, !storedApiKey.isEmpty else {
+            return nil
+        }
+        return storedApiKey
     }
 }
 

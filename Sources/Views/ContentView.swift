@@ -93,7 +93,9 @@ struct SidebarView: View {
     }
 
     private var codexProviders: [Provider] {
-        providerStore.providers.filter { $0.type == .codex }.sorted { $0.sortOrder < $1.sortOrder }
+        providerStore.providers
+            .filter { $0.type == .codex || $0.type == .codexOAuth }
+            .sorted { $0.sortOrder < $1.sortOrder }
     }
 
     @ViewBuilder
@@ -403,7 +405,9 @@ struct ProviderDetailView: View {
                             configRow(labels.apiKey, maskAPIKey(provider.apiKey ?? ""))
                             Divider()
                         }
-                        configRow(labels.baseUrl, provider.baseUrl)
+                        if provider.type != .codexOAuth {
+                            configRow(labels.baseUrl, provider.baseUrl)
+                        }
                         if let model = provider.model, !model.isEmpty {
                             Divider()
                             configRow(labels.model, model)

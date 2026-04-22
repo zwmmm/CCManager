@@ -10,11 +10,20 @@ struct PixelAvatarView: View {
     @State private var imageData: Data?
     @State private var isLoading = false
 
+    private var normalizedAvatarType: ProviderType {
+        switch type {
+        case .codexOAuth:
+            return .codex
+        default:
+            return type
+        }
+    }
+
     private var diceBearURL: URL? {
-        // DiceBear: Claude Code → adventurer, Codex → open-peeps
+        // DiceBear: Claude Code → adventurer, Codex/Codex OAuth → open-peeps
         // https://www.dicebear.com/styles/adventurer/
         // https://www.dicebear.com/styles/open-peeps/
-        let style = type == .codex ? "open-peeps" : "adventurer"
+        let style = normalizedAvatarType == .codex ? "open-peeps" : "adventurer"
         var components = URLComponents()
         components.scheme = "https"
         components.host = "api.dicebear.com"
@@ -43,7 +52,7 @@ struct PixelAvatarView: View {
             }
         }
         .frame(width: size, height: size)
-        .scaleEffect(x: type == .claudeCode ? -1 : 1, y: 1) // Claude Code 朝左需翻转，其他朝右
+        .scaleEffect(x: normalizedAvatarType == .claudeCode ? -1 : 1, y: 1) // Claude Code 朝左需翻转，其他朝右
         .clipShape(RoundedRectangle(cornerRadius: size * 0.15))
         .task {
             await loadImage()

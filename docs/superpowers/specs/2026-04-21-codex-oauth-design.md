@@ -59,7 +59,7 @@ ALTER TABLE providers ADD COLUMN oauth_display_name TEXT;
 
 ```
 用户点击"登录"
-  → 执行 `ccodex login --device-auth`
+  → 执行 `codex login --device-auth`
   → 解析 stdout，提取：
       - user_code: "U9CQ-MFLJ1"
       - verification_uri: "https://auth.openai.com/codex/device"
@@ -72,7 +72,7 @@ ALTER TABLE providers ADD COLUMN oauth_display_name TEXT;
 
 ### 4.2 输出解析
 
-`ccodex login --device-auth` 输出格式：
+`codex login --device-auth` 输出格式：
 
 ```
 Welcome to Codex [v0.122.0]
@@ -191,7 +191,7 @@ auth.json 和 config.toml 均使用原子写入（先写临时文件再 rename�
 
 ```
 Sources/Shared/
-  ├── CodexOAuthLoginParser.swift   // 解析 ccodex login --device-auth 输出
+  ├── CodexOAuthLoginParser.swift   // 解析 codex login --device-auth 输出
   └── ConfigWriter+CodexOAuth.swift // Codex OAuth auth.json / config.toml 写入
 ```
 

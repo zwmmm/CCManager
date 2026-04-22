@@ -54,9 +54,13 @@ struct ProviderFormView: View {
     }
 
     private var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !baseUrl.trimmingCharacters(in: .whitespaces).isEmpty &&
-        (type == .codexOAuth ? true : !apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
+        if type == .codexOAuth {
+            return oauthIsLoggedIn
+        }
+
+        return !name.trimmingCharacters(in: .whitespaces).isEmpty &&
+            !baseUrl.trimmingCharacters(in: .whitespaces).isEmpty &&
+            !apiKey.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private var isEditing: Bool {
@@ -118,11 +122,11 @@ struct ProviderFormView: View {
             // Scrollable content
             ScrollView {
                 VStack(spacing: 14) {
-                    fieldGroup("NAME", text: $name, placeholder: "My Provider")
                     if type != .codexOAuth {
+                        fieldGroup("NAME", text: $name, placeholder: "My Provider")
                         fieldGroup("API KEY", text: $apiKey, placeholder: "sk-...", isSecure: true)
+                        fieldGroup("BASE URL", text: $baseUrl, placeholder: baseUrlPlaceholder)
                     }
-                    fieldGroup("BASE URL", text: $baseUrl, placeholder: baseUrlPlaceholder)
 
                     // OAuth Account section (only for codexOAuth)
                     if type == .codexOAuth {
@@ -287,12 +291,18 @@ struct ProviderFormView: View {
                 opusModel = provider.opusModel ?? ""
                 oauthIsLoggedIn = provider.oauthAccountId != nil
                 oauthDisplayName = provider.oauthDisplayName ?? ""
+                if let accessToken = provider.oauthAccessToken,
+                   let refreshToken = provider.oauthRefreshToken,
+                   let idToken = provider.oauthIdToken {
+                    pendingOauthTokens = (accessToken, refreshToken, idToken)
+                }
             }
         }
         .sheet(isPresented: $showOAuthLogin) {
             OAuthLoginSheet { accountId, accessToken, refreshToken, idToken, displayName in
                 self.oauthIsLoggedIn = true
                 self.oauthDisplayName = displayName ?? "ChatGPT Account"
+                self.name = self.oauthDisplayName
                 self.pendingOauthTokens = (accessToken, refreshToken, idToken)
                 self.showOAuthLogin = false
             }
@@ -327,13 +337,16 @@ struct ProviderFormView: View {
 
     private func saveProvider() {
         let provider: Provider
+        let providerName = resolvedProviderName()
+        let providerBaseUrl = resolvedBaseUrl()
+
         switch mode {
         case .add:
             provider = Provider(
-                name: name.trimmingCharacters(in: .whitespaces),
+                name: providerName,
                 type: type,
                 apiKey: type == .codexOAuth ? nil : apiKey.trimmingCharacters(in: .whitespaces),
-                baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
+                baseUrl: providerBaseUrl,
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
                 thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
                 haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
@@ -350,10 +363,10 @@ struct ProviderFormView: View {
         case .edit(let existing):
             provider = Provider(
                 id: existing.id,
-                name: name.trimmingCharacters(in: .whitespaces),
+                name: providerName,
                 type: type,
                 apiKey: type == .codexOAuth ? nil : apiKey.trimmingCharacters(in: .whitespaces),
-                baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
+                baseUrl: providerBaseUrl,
                 model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
                 thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
                 haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
@@ -380,15 +393,18 @@ struct ProviderFormView: View {
         testMessage = nil
 
         let provider = Provider(
-            name: name.trimmingCharacters(in: .whitespaces),
+            name: resolvedProviderName(),
             type: type,
-            apiKey: apiKey.trimmingCharacters(in: .whitespaces),
-            baseUrl: baseUrl.trimmingCharacters(in: .whitespaces),
+            apiKey: type == .codexOAuth ? nil : apiKey.trimmingCharacters(in: .whitespaces),
+            baseUrl: resolvedBaseUrl(),
             model: model.isEmpty ? nil : model.trimmingCharacters(in: .whitespaces),
             thinkingModel: thinkingModel.isEmpty ? nil : thinkingModel.trimmingCharacters(in: .whitespaces),
             haikuModel: haikuModel.isEmpty ? nil : haikuModel.trimmingCharacters(in: .whitespaces),
             sonnetModel: sonnetModel.isEmpty ? nil : sonnetModel.trimmingCharacters(in: .whitespaces),
-            opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces)
+            opusModel: opusModel.isEmpty ? nil : opusModel.trimmingCharacters(in: .whitespaces),
+            oauthAccessToken: type == .codexOAuth ? pendingOauthTokens?.accessToken : nil,
+            oauthRefreshToken: type == .codexOAuth ? pendingOauthTokens?.refreshToken : nil,
+            oauthIdToken: type == .codexOAuth ? pendingOauthTokens?.idToken : nil
         )
 
         let result = await ProviderTester.shared.test(provider: provider)
@@ -403,5 +419,21 @@ struct ProviderFormView: View {
             testSuccess = false
             testMessage = error
         }
+    }
+
+    private func resolvedProviderName() -> String {
+        if type == .codexOAuth {
+            return oauthDisplayName.trimmingCharacters(in: .whitespaces).isEmpty ? "ChatGPT Account" : oauthDisplayName.trimmingCharacters(in: .whitespaces)
+        }
+
+        return name.trimmingCharacters(in: .whitespaces)
+    }
+
+    private func resolvedBaseUrl() -> String {
+        if type == .codexOAuth {
+            return ""
+        }
+
+        return baseUrl.trimmingCharacters(in: .whitespaces)
     }
 }

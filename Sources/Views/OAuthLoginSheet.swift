@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct OAuthLoginSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -20,15 +21,16 @@ struct OAuthLoginSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
-                Text("LOGIN CHATGPT")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                Text("ChatGPT Login")
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
                 Spacer()
                 Button {
                     loginTask?.cancel()
+                    Task {
+                        await OAuthLoginManager.shared.cancelCurrentLogin()
+                    }
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -37,20 +39,23 @@ struct OAuthLoginSheet: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 18)
-            .padding(.bottom, 14)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             Divider()
 
             content
         }
-        .frame(width: 340)
+        .frame(width: 336)
         .onAppear {
             startLoginFlow()
         }
         .onDisappear {
             loginTask?.cancel()
+            Task {
+                await OAuthLoginManager.shared.cancelCurrentLogin()
+            }
         }
     }
 
@@ -60,7 +65,7 @@ struct OAuthLoginSheet: View {
         case .idle:
             IdleContent(deviceCode: deviceCode, verificationUrl: verificationUrl)
         case .polling:
-            PollingContent(deviceCode: deviceCode)
+            PollingContent(deviceCode: deviceCode, verificationUrl: verificationUrl)
         case .success:
             SuccessContent()
         case .error:
@@ -106,91 +111,122 @@ struct IdleContent: View {
     let verificationUrl: String
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("1. Open this link in your browser and sign in:")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack {
-                Text(verificationUrl)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                Spacer()
-                Button {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(verificationUrl, forType: .string)
-                } label: {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 11))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(10)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-
-            Text("2. Enter this one-time code:")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack {
-                Text(deviceCode.isEmpty ? "Loading..." : deviceCode)
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.primary)
-                Spacer()
-                Button {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(deviceCode, forType: .string)
-                } label: {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 11))
-                }
-                .buttonStyle(.plain)
-                .disabled(deviceCode.isEmpty)
-            }
-            .padding(12)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .padding(18)
+        OAuthAuthorizationDetails(statusText: "Loading login...", deviceCode: deviceCode, verificationUrl: verificationUrl)
+            .padding(16)
     }
 }
 
 struct PollingContent: View {
     let deviceCode: String
+    let verificationUrl: String
 
     var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(0.8)
+        OAuthAuthorizationDetails(
+            statusText: "Waiting for approval",
+            deviceCode: deviceCode,
+            verificationUrl: verificationUrl
+        )
+        .padding(16)
+    }
+}
 
-            Text("Waiting for authorization...")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.secondary)
+private struct OAuthAuthorizationDetails: View {
+    let statusText: String
+    let deviceCode: String
+    let verificationUrl: String
 
-            Text("Code: \(deviceCode)")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(.secondary)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .scaleEffect(0.7)
+
+                Text(statusText)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+
+            authorizationSection(
+                title: "Open browser",
+                primaryActionIcon: "arrow.up.right.square",
+                primaryAction: {
+                    guard let url = URL(string: verificationUrl) else { return }
+                    NSWorkspace.shared.open(url)
+                },
+                valueView: AnyView(
+                    Text(verificationUrl)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                )
+            )
+
+            authorizationSection(
+                title: "Enter code",
+                primaryActionIcon: nil,
+                primaryAction: nil,
+                valueView: AnyView(
+                    Text(deviceCode.isEmpty ? "Loading..." : deviceCode)
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.primary)
+                )
+            )
         }
-        .padding(40)
+        .padding(.vertical, 14)
+    }
+
+    private func authorizationSection(
+        title: String,
+        primaryActionIcon: String?,
+        primaryAction: (() -> Void)?,
+        valueView: AnyView
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            HStack {
+                valueView
+                Spacer()
+                if let primaryActionIcon, let primaryAction {
+                    Button(action: primaryAction) {
+                        Image(systemName: primaryActionIcon)
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(title == "Open browser" ? verificationUrl : deviceCode, forType: .string)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(title == "Enter code" && deviceCode.isEmpty)
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 38)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
     }
 }
 
 struct SuccessContent: View {
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 36))
+                .font(.system(size: 34))
                 .foregroundStyle(.green)
 
-            Text("Login Successful!")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+            Text("Login complete")
+                .font(.system(size: 13, weight: .semibold))
         }
-        .padding(40)
+        .padding(32)
     }
 }
 
@@ -198,16 +234,16 @@ struct ErrorContent: View {
     let message: String
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 36))
+                .font(.system(size: 34))
                 .foregroundStyle(.red)
 
-            Text("Error: \(message)")
-                .font(.system(size: 12, design: .monospaced))
+            Text(message)
+                .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(40)
+        .padding(28)
     }
 }

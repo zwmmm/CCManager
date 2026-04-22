@@ -17,14 +17,15 @@ final class DiceBearAvatarCache {
     }
 
     func avatar(for name: String, type: ProviderType, size: CGFloat) async -> NSImage {
-        let key = "\(name)-\(type.rawValue)-\(Int(size))" as NSString
+        let normalizedType = normalizedAvatarType(for: type)
+        let key = "\(name)-\(normalizedType.rawValue)-\(Int(size))" as NSString
 
         if let cached = cache.object(forKey: key) {
             return cached
         }
 
-        // DiceBear: Claude Code → adventurer, Codex → open-peeps
-        let style = type == .codex ? "open-peeps" : "adventurer"
+        // DiceBear: Claude Code → adventurer, Codex/Codex OAuth → open-peeps
+        let style = normalizedType == .codex ? "open-peeps" : "adventurer"
         var components = URLComponents()
         components.scheme = "https"
         components.host = "api.dicebear.com"
@@ -75,6 +76,15 @@ final class DiceBearAvatarCache {
 
     func clearCache() {
         cache.removeAllObjects()
+    }
+
+    private func normalizedAvatarType(for type: ProviderType) -> ProviderType {
+        switch type {
+        case .codexOAuth:
+            return .codex
+        default:
+            return type
+        }
     }
 }
 

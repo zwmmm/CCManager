@@ -354,7 +354,7 @@ struct StatusBarMenuView: View {
     }
 
     private var codexProviders: [Provider] {
-        providerStore.providers.filter { $0.type == .codex }
+        providerStore.providers.filter { $0.type == .codex || $0.type == .codexOAuth }
     }
 
     private enum ConfigTarget {

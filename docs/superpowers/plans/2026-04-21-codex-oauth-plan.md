@@ -4,7 +4,7 @@
 
 **目标：** 为 CCManager 添加第三种 Provider 类型 Codex OAuth，支持通过 OAuth 登录 ChatGPT 账号（Plus/Pro），替代 API Key 认证。
 
-**架构：** 新增 `codexOAuth` Provider 类型，OAuth Token 存储于 SQLite，仅在激活时写入 `~/.codex/auth.json` 和 `config.toml`。登录通过执行 `ccodex login --device-auth` 实现 Device Code 流程。
+**架构：** 新增 `codexOAuth` Provider 类型，OAuth Token 存储于 SQLite，仅在激活时写入 `~/.codex/auth.json` 和 `config.toml`。登录通过执行 `codex login --device-auth` 实现 Device Code 流程。
 
 **技术栈：** Swift/SwiftUI, SQLite.swift, Foundation
 
@@ -17,7 +17,7 @@
 | `Sources/Models/Provider.swift` | 修改 | 新增 `codexOAuth` 类型和 OAuth 字段 |
 | `Sources/Shared/Database.swift` | 修改 | 数据库迁移添加 OAuth 列 |
 | `Sources/Shared/ConfigWriter.swift` | 修改 | 新增 `writeCodexOAuthConfig` 方法，修改 dispatch |
-| `Sources/Shared/CodexOAuthLoginParser.swift` | 创建 | 解析 `ccodex login --device-auth` 输出 |
+| `Sources/Shared/CodexOAuthLoginParser.swift` | 创建 | 解析 `codex login --device-auth` 输出 |
 | `Sources/Views/ProviderFormView.swift` | 修改 | OAuth 登录 UI 和刷新按钮 |
 | `Sources/Views/OAuthLoginSheet.swift` | 创建 | OAuth 登录弹窗（Device Code 等待） |
 
@@ -266,7 +266,7 @@ struct DeviceCodeInfo {
 }
 
 enum CodexOAuthLoginParser {
-    /// 从 `ccodex login --device-auth` 的 stdout 解析 Device Code 信息
+    /// 从 `codex login --device-auth` 的 stdout 解析 Device Code 信息
     static func parse(_ output: String) -> DeviceCodeInfo? {
         // 匹配格式: XXXX-XXXX (4个字母数字 + 短横线 + 4个字母数字)
         let codePattern = #"([A-Z0-9]{4}-[A-Z0-9]{4})"#
@@ -828,7 +828,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 
 - [ ] **Step 1: 编写 OAuthLoginManager**
 
-这个 manager 负责执行 `ccodex login --device-auth` 并轮询 auth.json。
+这个 manager 负责执行 `codex login --device-auth` 并轮询 auth.json。
 
 ```swift
 import Foundation
@@ -841,7 +841,7 @@ actor OAuthLoginManager {
     /// 执行 Device Code 登录，返回解析出的 DeviceCodeInfo
     func startLogin() async throws -> DeviceCodeInfo {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/local/bin/ccodex")
+        process.executableURL = URL(fileURLWithPath: "/usr/local/bin/codex")
         process.arguments = ["login", "--device-auth"]
 
         let pipe = Pipe()
@@ -1186,7 +1186,7 @@ git commit -m "feat: implement Codex OAuth provider support
 
 - Add codexOAuth ProviderType
 - Store OAuth tokens in SQLite (not written to disk until activated)
-- Device Code login via ccodex login --device-auth
+- Device Code login via codex login --device-auth
 - Write OAuth auth.json (auth_mode=chatgpt, OPENAI_API_KEY=null) on activate
 - Write minimal config.toml (model only, no model_provider)
 
