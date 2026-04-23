@@ -12,6 +12,8 @@ env:
   XCODE_VERSION: '26.4'
   SCHEME: 'CCManager'
   PROJECT: 'CCManager.xcodeproj'
+  HOMEBREW_TAP_REPO: 'zwmmm/homebrew-tap'
+  HOMEBREW_CASK_PATH: 'Casks/ccmanager.rb'
 
 jobs:
   build-and-release:
@@ -79,6 +81,12 @@ jobs:
             CCManager-${{ github.ref_name }}.dmg
           rm -rf dmg_temp
 
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccmanager-dmg
+          path: CCManager-${{ github.ref_name }}.dmg
+
       - name: Generate Appcast
         run: |
           python3 - <<'PY'
@@ -137,3 +145,79 @@ jobs:
           body_path: ${{ github.workspace }}/release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+
+  update-homebrew-tap:
+    needs: build-and-release
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download DMG Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ccmanager-dmg
+
+      - name: Checkout Homebrew Tap
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.HOMEBREW_TAP_REPO }}
+          token: ${{ secrets.HOMEBREW_TAP_PAT }}
+          path: homebrew-tap
+
+      - name: Update Cask
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          DMG_FILE="CCManager-${TAG}.dmg"
+          DMG_SHA256="$(sha256sum "${DMG_FILE}" | awk '{print $1}')"
+          CASK_FILE="homebrew-tap/${HOMEBREW_CASK_PATH}"
+
+          export VERSION DMG_SHA256 CASK_FILE
+
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          version = os.environ["VERSION"]
+          sha256 = os.environ["DMG_SHA256"]
+          cask_file = pathlib.Path(os.environ["CASK_FILE"])
+          original = cask_file.read_text()
+          updated = original
+
+          replacements = [
+              (r'version "[^"]+"', f'version "{version}"'),
+              (r'sha256 "[^"]+"', f'sha256 "{sha256}"'),
+              (
+                  r'url "[^"]+"',
+                  f'url "https://github.com/zwmmm/CCManager/releases/download/v#{{version}}/CCManager-v#{{version}}.dmg"',
+              ),
+          ]
+
+          for pattern, replacement in replacements:
+              updated, count = re.subn(pattern, replacement, updated, count=1)
+              if count != 1:
+                  raise SystemExit(f"failed to update pattern: {pattern}")
+
+          if updated == original:
+              print("Cask already up to date")
+          else:
+              cask_file.write_text(updated)
+              print(f"Updated {cask_file}")
+          PY
+
+      - name: Commit and Push Tap Update
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No Homebrew tap changes to commit"
+            exit 0
+          fi
+
+          git add "${HOMEBREW_CASK_PATH}"
+          git commit -m "ccmanager ${GITHUB_REF_NAME#v}"
+          git push
