@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2] - 2026-04-23
+
+### Others
+
+- Polish ThemeSettingsView layout with wider settings panel and improved section card padding
+- Update CCManagerCLI scheme to match current Xcode format
+
 ## [1.12.1] - 2026-04-23
 
 ### Others
