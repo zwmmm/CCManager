@@ -2,7 +2,8 @@
 
 > macOS 菜单栏小工具，管理 AI CLI Provider 配置，一键切换超方便！
 
-<img width="755" height="547" alt="image" src="https://github.com/user-attachments/assets/233826c9-03b2-4d24-a235-53e6c9846791" />
+<img width="1702" height="1228" alt="image" src="https://github.com/user-attachments/assets/370eda37-0bff-46d8-95bb-346595eb58a5" />
+
 
 ---
 
@@ -41,7 +42,8 @@ CCManager 的核心理念很简单：
 
 ### ⚡ 一键切换
 
-<img width="306" height="426" alt="image" src="https://github.com/user-attachments/assets/d862a91a-0077-423f-ae79-e0dfa92f37a0" />
+<img width="676" height="904" alt="image" src="https://github.com/user-attachments/assets/956d9829-cc80-4056-8499-3c60dc5751a9" />
+
 
 右键点击菜单栏，展示切换面板 ✨
 
