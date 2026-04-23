@@ -13,26 +13,26 @@ struct CollapsibleGroup<Content: View>: View {
                     isExpanded.toggle()
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     Text(title)
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundStyle(AppTheme.textPrimary)
 
                     if !isExpanded {
                         Text("(\(count))")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(.system(size: 9.5, design: .monospaced))
                             .foregroundStyle(AppTheme.textSecondary)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(AppTheme.textSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

@@ -19,7 +19,7 @@ struct ContentView: View {
                 showingSettings: $showingSettings,
                 editingProvider: $editingProvider
             )
-            .frame(width: 248)
+            .frame(width: 232)
 
             ZStack {
                 AppTheme.background
@@ -106,25 +106,25 @@ struct SidebarView: View {
 
     @ViewBuilder
     private func flatContentView() -> some View {
-        LazyVStack(spacing: 10) {
+        LazyVStack(spacing: 8) {
             ForEach(providerStore.providers) { provider in
                 rowView(for: provider)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 6)
-        .padding(.bottom, 18)
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 14)
     }
 
     @ViewBuilder
     private func groupedContentView() -> some View {
-        LazyVStack(spacing: 10) {
+        LazyVStack(spacing: 8) {
             CollapsibleGroup(
                 isExpanded: $isClaudeCodeCollapsed,
                 title: "Claude Code",
                 count: claudeCodeProviders.count
             ) {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     ForEach(claudeCodeProviders) { provider in
                         rowView(for: provider)
                     }
@@ -136,33 +136,33 @@ struct SidebarView: View {
                 title: "Codex",
                 count: codexProviders.count
             ) {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     ForEach(codexProviders) { provider in
                         rowView(for: provider)
                     }
                 }
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 6)
-        .padding(.bottom, 18)
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 14)
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("CC Manager")
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(AppTheme.textPrimary)
 
                 Text("Provider routing and API config")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(AppTheme.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
 
             ScrollView {
                 if groupingEnabled {
@@ -172,12 +172,12 @@ struct SidebarView: View {
                 }
             }
 
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Rectangle()
                     .fill(AppTheme.separator)
                     .frame(height: 1)
 
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Spacer()
 
                     sidebarIconButton(systemName: "plus") {
@@ -201,8 +201,8 @@ struct SidebarView: View {
                     .buttonStyle(ScaleButtonStyle())
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
         .background(
             ZStack {
@@ -266,22 +266,22 @@ struct SidebarView: View {
         let isSelected = selectedProviderId == provider.id
         let isHovered = hoveredProviderId == provider.id
 
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ZStack {
                 Circle()
                     .fill(isSelected ? themeManager.brandColor.opacity(0.14) : AppTheme.subtleFill)
-                    .frame(width: 40, height: 40)
-                CachedPixelAvatarView(name: provider.name, type: provider.type, size: 28)
+                    .frame(width: 34, height: 34)
+                CachedPixelAvatarView(name: provider.name, type: provider.type, size: 24)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(provider.name)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
 
                 Text(provider.type.rawValue)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 9.5, weight: .medium))
                     .foregroundStyle(AppTheme.textSecondary)
                     .lineLimit(1)
             }
@@ -292,11 +292,11 @@ struct SidebarView: View {
                 ProviderActiveIndicator(accent: themeManager.brandColor)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
                         isSelected
                             ? AnyShapeStyle(
@@ -312,7 +312,7 @@ struct SidebarView: View {
                             : AnyShapeStyle(isHovered ? AppTheme.hoverFill : AppTheme.cardFill)
                     )
 
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(
                         isSelected ? themeManager.brandColor.opacity(0.38) : AppTheme.cardStroke.opacity(isHovered ? 0.95 : 0.52),
                         lineWidth: 1
@@ -321,9 +321,9 @@ struct SidebarView: View {
         )
         .shadow(
             color: isSelected ? themeManager.brandColor.opacity(0.16) : (isHovered ? AppTheme.shadow : Color.clear),
-            radius: isSelected ? 18 : (isHovered ? 10 : 0),
+            radius: isSelected ? 14 : (isHovered ? 8 : 0),
             x: 0,
-            y: isSelected ? 8 : 5
+            y: isSelected ? 6 : 4
         )
         .contentShape(Rectangle())
         .offset(y: isHovered && !isSelected ? -1 : 0)
@@ -375,18 +375,18 @@ struct SidebarView: View {
     @ViewBuilder
     private func sidebarToolbarIcon(systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(AppTheme.textSecondary)
-            .frame(width: 32, height: 32)
+            .frame(width: 28, height: 28)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(AppTheme.cardFill)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .stroke(AppTheme.cardStroke, lineWidth: 1)
             }
-            .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 6)
+            .shadow(color: AppTheme.shadow, radius: 6, x: 0, y: 4)
     }
 }
 
@@ -452,35 +452,35 @@ struct ProviderDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 22) {
-                VStack(spacing: 12) {
+            VStack(spacing: 18) {
+                VStack(spacing: 10) {
                     ZStack {
                         Circle()
                             .fill(AppTheme.subtleFill)
-                            .frame(width: 82, height: 82)
+                            .frame(width: 68, height: 68)
                             .overlay {
                                 Circle()
                                     .stroke(AppTheme.cardStroke, lineWidth: 1)
                             }
 
-                        CachedPixelAvatarView(name: provider.name, type: provider.type, size: 60)
+                        CachedPixelAvatarView(name: provider.name, type: provider.type, size: 48)
                     }
-                    .shadow(color: AppTheme.shadow, radius: 14, x: 0, y: 8)
+                    .shadow(color: AppTheme.shadow, radius: 10, x: 0, y: 6)
 
-                    VStack(spacing: 6) {
+                    VStack(spacing: 4) {
                         Text(provider.name)
-                            .font(.system(size: 26, weight: .bold))
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundStyle(AppTheme.textPrimary)
                             .lineLimit(1)
 
                         Text(provider.type.rawValue)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(AppTheme.textSecondary)
                             .lineLimit(1)
 
                         if let model = provider.model, !model.isEmpty {
                             Text(model)
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
                                 .foregroundStyle(AppTheme.textSecondary)
                                 .lineLimit(1)
                         }
@@ -492,11 +492,11 @@ struct ProviderDetailView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, 14)
+                .padding(.top, 10)
                 .scaleEffect(isAppearing ? 1 : 0.985)
                 .opacity(isAppearing ? 1 : 0)
 
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("CONFIGURATION")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -544,7 +544,7 @@ struct ProviderDetailView: View {
                         }
                     }
                     .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .fill(
                                 LinearGradient(
                                     colors: [
@@ -557,21 +557,22 @@ struct ProviderDetailView: View {
                             )
                     )
                     .overlay {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .stroke(AppTheme.cardStroke, lineWidth: 1)
                     }
-                    .shadow(color: AppTheme.shadow, radius: 24, x: 0, y: 16)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .shadow(color: AppTheme.shadow, radius: 18, x: 0, y: 12)
                 }
                 .opacity(isAppearing ? 1 : 0)
                 .offset(y: isAppearing ? 0 : 12)
 
-                HStack(spacing: 14) {
+                HStack(spacing: 12) {
                     Button {
                         onEdit(provider)
                     } label: {
                         Label("Edit", systemImage: "pencil")
-                            .font(.system(size: 13, weight: .semibold))
-                            .frame(minWidth: 110)
+                            .font(.system(size: 12, weight: .semibold))
+                            .frame(minWidth: 102)
                     }
                     .buttonStyle(SecondaryDashboardButtonStyle())
 
@@ -583,17 +584,17 @@ struct ProviderDetailView: View {
                         showSuccessToast = true
                     } label: {
                         Label("Apply Config", systemImage: "arrow.up.doc")
-                            .font(.system(size: 13, weight: .semibold))
-                            .frame(minWidth: 166)
+                            .font(.system(size: 12, weight: .semibold))
+                            .frame(minWidth: 152)
                     }
                     .buttonStyle(PrimaryDashboardButtonStyle(accent: themeManager.brandColor))
                 }
                 .opacity(isAppearing ? 1 : 0)
                 .offset(y: isAppearing ? 0 : 12)
-                .padding(.bottom, 18)
+                .padding(.bottom, 14)
             }
-            .padding(.horizontal, 34)
-            .padding(.top, 14)
+            .padding(.horizontal, 28)
+            .padding(.top, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
@@ -636,7 +637,7 @@ struct ProviderDetailView: View {
         Rectangle()
             .fill(AppTheme.separator)
             .frame(height: 1)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
     }
 
     private func maskAPIKey(_ key: String) -> String {
@@ -656,15 +657,15 @@ private struct ProviderActiveBadge: View {
     var body: some View {
         HStack(spacing: compact ? 5 : 8) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: compact ? 10 : 11, weight: .semibold))
+                .font(.system(size: compact ? 9.5 : 11, weight: .semibold))
 
             Text("ACTIVE")
-                .font(.system(size: compact ? 10 : 11, weight: .bold, design: .monospaced))
+                .font(.system(size: compact ? 9.5 : 11, weight: .bold, design: .monospaced))
                 .kerning(compact ? 0.4 : 0.7)
         }
         .foregroundStyle(accent)
-        .padding(.horizontal, compact ? 8 : 12)
-        .padding(.vertical, compact ? 4 : 7)
+        .padding(.horizontal, compact ? 7 : 12)
+        .padding(.vertical, compact ? 3.5 : 7)
         .background(
             Capsule()
                 .fill(accent.opacity(compact ? 0.1 : 0.12))
@@ -684,17 +685,17 @@ private struct ProviderActiveIndicator: View {
         ZStack {
             Circle()
                 .fill(accent.opacity(0.12))
-                .frame(width: 24, height: 24)
+                .frame(width: 20, height: 20)
 
             Circle()
                 .stroke(accent.opacity(0.22), lineWidth: 1)
-                .frame(width: 24, height: 24)
+                .frame(width: 20, height: 20)
 
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 9.5, weight: .semibold))
                 .foregroundStyle(accent)
         }
-        .shadow(color: accent.opacity(0.08), radius: 6, x: 0, y: 3)
+        .shadow(color: accent.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -705,15 +706,15 @@ private struct ConfigRowView: View {
     @State private var isHovering = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
+        HStack(alignment: .center, spacing: 14) {
             Text(label)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(.system(size: 9.5, weight: .bold, design: .monospaced))
                 .kerning(0.5)
                 .foregroundStyle(AppTheme.textTertiary)
-                .frame(width: 190, alignment: .leading)
+                .frame(width: 176, alignment: .leading)
 
             Text(value)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundStyle(AppTheme.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -724,18 +725,18 @@ private struct ConfigRowView: View {
                 NSPasteboard.general.setString(value, forType: .string)
             } label: {
                 Image(systemName: "doc.on.doc")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(AppTheme.textSecondary)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 22, height: 22)
                     .background(AppTheme.subtleFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
             .buttonStyle(.plain)
             .opacity(isHovering ? 1 : 0)
             .animation(.easeOut(duration: 0.18), value: isHovering)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
         .background(isHovering ? AppTheme.hoverFill.opacity(0.55) : Color.clear)
         .onHover { hovering in
             isHovering = hovering
@@ -749,10 +750,10 @@ private struct PrimaryDashboardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(.white)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
@@ -765,10 +766,10 @@ private struct PrimaryDashboardButtonStyle: ButtonStyle {
                     )
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .stroke(Color.white.opacity(0.18), lineWidth: 1)
             }
-            .shadow(color: accent.opacity(configuration.isPressed ? 0.12 : 0.25), radius: 18, x: 0, y: 10)
+            .shadow(color: accent.opacity(configuration.isPressed ? 0.12 : 0.25), radius: 14, x: 0, y: 8)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
@@ -778,14 +779,14 @@ private struct SecondaryDashboardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(AppTheme.textPrimary)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .fill(configuration.isPressed ? AppTheme.hoverFill : AppTheme.cardFill)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .stroke(AppTheme.cardStroke, lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
