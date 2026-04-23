@@ -19,7 +19,9 @@ struct ThemeSettingsView: View {
     }()
 
     // MARK: - Design Tokens
-    private let horizontalPadding: CGFloat = 18
+    private let settingsWidth: CGFloat = 376
+    private let horizontalPadding: CGFloat = 24
+    private let sectionCardPadding: CGFloat = 14
     private let sectionGap: CGFloat = 12
 
     var body: some View {
@@ -27,20 +29,25 @@ struct ThemeSettingsView: View {
             headerView
 
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: sectionGap) {
+                VStack(alignment: .leading, spacing: sectionGap) {
                     appearanceSection
+                        .padding(.horizontal, horizontalPadding)
                     colorSection
+                        .padding(.horizontal, horizontalPadding)
                     generalSection
+                        .padding(.horizontal, horizontalPadding)
                     cliSection
+                        .padding(.horizontal, horizontalPadding)
                     aboutSection
+                        .padding(.horizontal, horizontalPadding)
                 }
-                .padding(.horizontal, horizontalPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 12)
             }
 
             footerView
         }
-        .frame(width: 340)
+        .frame(width: settingsWidth)
         .background(
             ZStack {
                 AppTheme.background
@@ -446,7 +453,8 @@ struct ThemeSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             content()
         }
-        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(sectionCardPadding)
         .background(AppTheme.cardFill)
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
