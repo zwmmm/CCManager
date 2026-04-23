@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.0] - 2026-04-23
+
+### Features
+
+- Redesign the main provider dashboard with a denser sidebar, refined provider detail views, and unified developer-tool styling
+- Refresh provider forms, settings, and the status bar menu with compact cards, clearer grouping, and consistent controls
+- Add richer theme palette metadata and stronger shared color primitives for the updated interface
+
+## [1.10.1] - 2026-04-23
+
+### Bug Fixes
+
+- Ensure app updates relaunch only after the old instance exits, including when settings or other sheets are open
+
 ## [1.10.0] - 2026-04-22
 
 ### Features

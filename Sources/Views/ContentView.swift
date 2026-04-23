@@ -19,18 +19,22 @@ struct ContentView: View {
                 showingSettings: $showingSettings,
                 editingProvider: $editingProvider
             )
-            .frame(width: 240)
+            .frame(width: 248)
 
-            Divider()
+            ZStack {
+                AppTheme.background
 
-            if let provider = providerStore.providers.first(where: { $0.id == selectedProviderId }) {
-                ProviderDetailView(provider: provider, onEdit: { editingProvider = $0 })
-                    .id(provider.id)
-                    .transition(.opacity.animation(.easeOut(duration: 0.2)))
-            } else {
-                EmptyStateView()
+                if let provider = providerStore.providers.first(where: { $0.id == selectedProviderId }) {
+                    ProviderDetailView(provider: provider, onEdit: { editingProvider = $0 })
+                        .id(provider.id)
+                        .transition(.opacity.animation(.easeOut(duration: 0.2)))
+                } else {
+                    EmptyStateView()
+                }
             }
         }
+        .background(AppTheme.background)
+        .fontDesign(.monospaced)
         .preferredColorScheme(themeManager.colorScheme)
         .accentColor(themeManager.brandColor)
         .onAppear {
@@ -83,10 +87,12 @@ struct SidebarView: View {
     private var groupingEnabled: Bool {
         themeManager.providerGroupingEnabled
     }
+
     @Binding var selectedProviderId: UUID?
     @Binding var showingAddSheet: Bool
     let showingSettings: Binding<Bool>
     @Binding var editingProvider: Provider?
+    @State private var hoveredProviderId: UUID?
 
     private var claudeCodeProviders: [Provider] {
         providerStore.providers.filter { $0.type == .claudeCode }.sorted { $0.sortOrder < $1.sortOrder }
@@ -100,25 +106,28 @@ struct SidebarView: View {
 
     @ViewBuilder
     private func flatContentView() -> some View {
-        LazyVStack(spacing: 4) {
+        LazyVStack(spacing: 10) {
             ForEach(providerStore.providers) { provider in
                 rowView(for: provider)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 8)
+        .padding(.horizontal, 14)
+        .padding(.top, 6)
+        .padding(.bottom, 18)
     }
 
     @ViewBuilder
     private func groupedContentView() -> some View {
-        LazyVStack(spacing: 0) {
+        LazyVStack(spacing: 10) {
             CollapsibleGroup(
                 isExpanded: $isClaudeCodeCollapsed,
                 title: "Claude Code",
                 count: claudeCodeProviders.count
             ) {
-                ForEach(claudeCodeProviders) { provider in
-                    rowView(for: provider)
+                VStack(spacing: 10) {
+                    ForEach(claudeCodeProviders) { provider in
+                        rowView(for: provider)
+                    }
                 }
             }
 
@@ -127,17 +136,34 @@ struct SidebarView: View {
                 title: "Codex",
                 count: codexProviders.count
             ) {
-                ForEach(codexProviders) { provider in
-                    rowView(for: provider)
+                VStack(spacing: 10) {
+                    ForEach(codexProviders) { provider in
+                        rowView(for: provider)
+                    }
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 8)
+        .padding(.horizontal, 14)
+        .padding(.top, 6)
+        .padding(.bottom, 18)
     }
 
     var body: some View {
         VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("CC Manager")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Text("Provider routing and API config")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
             ScrollView {
                 if groupingEnabled {
                     groupedContentView()
@@ -146,57 +172,61 @@ struct SidebarView: View {
                 }
             }
 
-            // Footer with all buttons
-            HStack(spacing: 12) {
-                Spacer()
+            VStack(spacing: 12) {
+                Rectangle()
+                    .fill(AppTheme.separator)
+                    .frame(height: 1)
 
-                Button {
-                    showingAddSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .frame(width: 24, height: 24)
-                        .background(themeManager.brandColor)
-                        .foregroundStyle(.black)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(ScaleButtonStyle())
+                HStack(spacing: 10) {
+                    Spacer()
 
-                Button {
-                    showingSettings.wrappedValue = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 11, weight: .light))
-                        .frame(width: 24, height: 24)
-                        .background(themeManager.brandColor)
-                        .foregroundStyle(.black)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(ScaleButtonStyle())
-
-                Menu {
-                    Button("Claude Code") {
-                        openConfig(for: .claudeCode)
+                    sidebarIconButton(systemName: "plus") {
+                        showingAddSheet = true
                     }
-                    Button("Codex") {
-                        openConfig(for: .codex)
+
+                    sidebarIconButton(systemName: "gearshape") {
+                        showingSettings.wrappedValue = true
                     }
-                } label: {
-                    Circle()
-                        .fill(themeManager.brandColor)
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(.black)
-                        )
+
+                    Menu {
+                        Button("Claude Code") {
+                            openConfig(for: .claudeCode)
+                        }
+                        Button("Codex") {
+                            openConfig(for: .codex)
+                        }
+                    } label: {
+                        sidebarToolbarIcon(systemName: "square.and.pencil")
+                    }
+                    .buttonStyle(ScaleButtonStyle())
                 }
-                .buttonStyle(ScaleButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        AppTheme.sidebar,
+                        AppTheme.sidebar.opacity(0.94)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        )
+        .overlay(alignment: .trailing) {
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [AppTheme.separator, AppTheme.separator.opacity(0.32)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 1)
+        }
     }
 
     private enum ConfigTarget {
@@ -215,7 +245,6 @@ struct SidebarView: View {
         }
 
         guard FileManager.default.fileExists(atPath: url.path) else {
-            // Create parent dir and touch the file if missing
             let parent = url.deletingLastPathComponent()
             try? FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
             FileManager.default.createFile(atPath: url.path, contents: nil)
@@ -235,37 +264,73 @@ struct SidebarView: View {
     @ViewBuilder
     private func rowView(for provider: Provider) -> some View {
         let isSelected = selectedProviderId == provider.id
+        let isHovered = hoveredProviderId == provider.id
 
-        HStack(spacing: 10) {
-            PixelAvatarView(name: provider.name, type: provider.type, size: 28)
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(isSelected ? themeManager.brandColor.opacity(0.14) : AppTheme.subtleFill)
+                    .frame(width: 40, height: 40)
+                PixelAvatarView(name: provider.name, type: provider.type, size: 28)
+            }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(provider.name)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .monospaced))
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
 
                 Text(provider.type.rawValue)
-                    .font(.system(size: 10, weight: .regular, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .lineLimit(1)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             if provider.isActive {
-                Text("ON")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(themeManager.brandColor)
-                    .clipShape(Capsule())
+                ProviderActiveIndicator(accent: themeManager.brandColor)
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-        .background(isSelected ? themeManager.brandColor.opacity(0.2) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        isSelected
+                            ? AnyShapeStyle(
+                                LinearGradient(
+                                    colors: [
+                                        themeManager.brandColor.opacity(0.22),
+                                        AppTheme.surfaceElevated.opacity(0.86)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            : AnyShapeStyle(isHovered ? AppTheme.hoverFill : AppTheme.cardFill)
+                    )
+
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        isSelected ? themeManager.brandColor.opacity(0.38) : AppTheme.cardStroke.opacity(isHovered ? 0.95 : 0.52),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(
+            color: isSelected ? themeManager.brandColor.opacity(0.16) : (isHovered ? AppTheme.shadow : Color.clear),
+            radius: isSelected ? 18 : (isHovered ? 10 : 0),
+            x: 0,
+            y: isSelected ? 8 : 5
+        )
         .contentShape(Rectangle())
+        .offset(y: isHovered && !isSelected ? -1 : 0)
+        .animation(.easeOut(duration: 0.16), value: isHovered)
+        .onHover { hovering in
+            hoveredProviderId = hovering ? provider.id : nil
+        }
         .onTapGesture {
             withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
                 selectedProviderId = provider.id
@@ -298,29 +363,72 @@ struct SidebarView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private func sidebarIconButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            sidebarToolbarIcon(systemName: systemName)
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    @ViewBuilder
+    private func sidebarToolbarIcon(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(AppTheme.textSecondary)
+            .frame(width: 32, height: 32)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(AppTheme.cardFill)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+            }
+            .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 6)
+    }
 }
 
 struct EmptyStateView: View {
     var body: some View {
-        VStack(spacing: 20) {
+        VStack {
             Spacer()
 
-            Image(systemName: "server.rack")
-                .font(.system(size: 48, weight: .light, design: .monospaced))
-                .foregroundStyle(.secondary)
+            VStack(spacing: 18) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [AppTheme.cardFill, AppTheme.subtleFill],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 96, height: 96)
 
-            VStack(spacing: 6) {
-                Text("No Provider Selected")
-                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    Image(systemName: "server.rack")
+                        .font(.system(size: 28, weight: .light))
+                        .foregroundStyle(AppTheme.textSecondary)
+                }
 
-                Text("Select a provider or add a new one")
-                    .font(.system(size: 13, weight: .regular, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 8) {
+                    Text("No Provider Selected")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(AppTheme.textPrimary)
+
+                    Text("Choose a provider from the sidebar or create a new configuration to get started.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 340)
+                }
             }
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
     }
 }
 
@@ -328,8 +436,8 @@ struct ScaleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .contentShape(Rectangle())
-            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }
 
@@ -344,110 +452,128 @@ struct ProviderDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Header Card
-                VStack(spacing: 14) {
-                    PixelAvatarView(name: provider.name, type: provider.type, size: 72)
+            VStack(spacing: 22) {
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.subtleFill)
+                            .frame(width: 82, height: 82)
+                            .overlay {
+                                Circle()
+                                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+                            }
+
+                        PixelAvatarView(name: provider.name, type: provider.type, size: 60)
+                    }
+                    .shadow(color: AppTheme.shadow, radius: 14, x: 0, y: 8)
 
                     VStack(spacing: 6) {
                         Text(provider.name)
-                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundStyle(AppTheme.textPrimary)
+                            .lineLimit(1)
 
                         Text(provider.type.rawValue)
-                            .font(.system(size: 13, weight: .regular, design: .monospaced))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(AppTheme.textSecondary)
+                            .lineLimit(1)
 
                         if let model = provider.model, !model.isEmpty {
                             Text(model)
-                                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(Color(nsColor: .controlBackgroundColor))
-                                .clipShape(Capsule())
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .foregroundStyle(AppTheme.textSecondary)
+                                .lineLimit(1)
                         }
                     }
+                    .multilineTextAlignment(.center)
 
                     if provider.isActive {
-                        HStack(spacing: 5) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 11, weight: .semibold))
-                            Text("ACTIVE")
-                                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        }
-                        .foregroundStyle(themeManager.brandColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(themeManager.brandColor.opacity(0.12))
-                        .clipShape(Capsule())
+                        ProviderActiveBadge(accent: themeManager.brandColor, compact: true)
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .scaleEffect(isAppearing ? 1 : 0.96)
+                .padding(.top, 14)
+                .scaleEffect(isAppearing ? 1 : 0.985)
                 .opacity(isAppearing ? 1 : 0)
 
-                // Config Section
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("CONFIGURATION")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .kerning(0.8)
+                            .foregroundStyle(AppTheme.textTertiary)
+                        Spacer()
+                    }
+
                     VStack(spacing: 0) {
                         let labels = configLabels(for: provider.type)
                         if provider.type == .codexOAuth {
-                            if let displayName = provider.oauthDisplayName, !displayName.isEmpty {
-                                configRow("ACCOUNT", displayName)
-                                Divider()
-                            } else {
-                                configRow("ACCOUNT", "ChatGPT Account")
-                                Divider()
-                            }
+                            ConfigRowView(label: "ACCOUNT", value: provider.oauthDisplayName?.isEmpty == false ? provider.oauthDisplayName! : "ChatGPT Account")
+                            premiumDivider()
                         } else {
-                            configRow(labels.apiKey, maskAPIKey(provider.apiKey ?? ""))
-                            Divider()
-                        }
-                        if provider.type != .codexOAuth {
-                            configRow(labels.baseUrl, provider.baseUrl)
-                        }
-                        if let model = provider.model, !model.isEmpty {
-                            Divider()
-                            configRow(labels.model, model)
+                            ConfigRowView(label: labels.apiKey, value: maskAPIKey(provider.apiKey ?? ""))
+                            premiumDivider()
                         }
 
-                        // Show advanced models for Claude Code
+                        if provider.type != .codexOAuth {
+                            ConfigRowView(label: labels.baseUrl, value: provider.baseUrl)
+                        }
+
+                        if let model = provider.model, !model.isEmpty {
+                            premiumDivider()
+                            ConfigRowView(label: labels.model, value: model)
+                        }
+
                         if provider.type == .claudeCode {
                             if let thinkingModel = provider.thinkingModel, !thinkingModel.isEmpty {
-                                Divider()
-                                configRow("ANTHROPIC_SMALL_FAST_MODEL", thinkingModel)
+                                premiumDivider()
+                                ConfigRowView(label: "ANTHROPIC_SMALL_FAST_MODEL", value: thinkingModel)
                             }
                             if let haikuModel = provider.haikuModel, !haikuModel.isEmpty {
-                                Divider()
-                                configRow("ANTHROPIC_DEFAULT_HAIKU_MODEL", haikuModel)
+                                premiumDivider()
+                                ConfigRowView(label: "ANTHROPIC_DEFAULT_HAIKU_MODEL", value: haikuModel)
                             }
                             if let sonnetModel = provider.sonnetModel, !sonnetModel.isEmpty {
-                                Divider()
-                                configRow("ANTHROPIC_DEFAULT_SONNET_MODEL", sonnetModel)
+                                premiumDivider()
+                                ConfigRowView(label: "ANTHROPIC_DEFAULT_SONNET_MODEL", value: sonnetModel)
                             }
                             if let opusModel = provider.opusModel, !opusModel.isEmpty {
-                                Divider()
-                                configRow("ANTHROPIC_DEFAULT_OPUS_MODEL", opusModel)
+                                premiumDivider()
+                                ConfigRowView(label: "ANTHROPIC_DEFAULT_OPUS_MODEL", value: opusModel)
                             }
                         }
                     }
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        AppTheme.cardFill,
+                                        AppTheme.surfaceElevated.opacity(0.72)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(AppTheme.cardStroke, lineWidth: 1)
+                    }
+                    .shadow(color: AppTheme.shadow, radius: 24, x: 0, y: 16)
                 }
                 .opacity(isAppearing ? 1 : 0)
                 .offset(y: isAppearing ? 0 : 12)
 
-                // Actions
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Button {
                         onEdit(provider)
                     } label: {
                         Label("Edit", systemImage: "pencil")
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(minWidth: 110)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryDashboardButtonStyle())
 
                     Button {
                         try? ConfigWriter.shared.writeProviderToConfig(provider)
@@ -457,18 +583,29 @@ struct ProviderDetailView: View {
                         showSuccessToast = true
                     } label: {
                         Label("Apply Config", systemImage: "arrow.up.doc")
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(minWidth: 166)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(themeManager.brandColor)
+                    .buttonStyle(PrimaryDashboardButtonStyle(accent: themeManager.brandColor))
                 }
                 .opacity(isAppearing ? 1 : 0)
                 .offset(y: isAppearing ? 0 : 12)
+                .padding(.bottom, 18)
             }
-            .padding(20)
+            .padding(.horizontal, 34)
+            .padding(.top, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(
+            LinearGradient(
+                colors: [
+                    AppTheme.surface.opacity(0.28),
+                    Color.clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .toast(isPresented: $showSuccessToast, message: "Config Applied")
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(0.05)) {
@@ -494,19 +631,12 @@ struct ProviderDetailView: View {
         }
     }
 
-    private func configRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+    @ViewBuilder
+    private func premiumDivider() -> some View {
+        Rectangle()
+            .fill(AppTheme.separator)
+            .frame(height: 1)
+            .padding(.horizontal, 20)
     }
 
     private func maskAPIKey(_ key: String) -> String {
@@ -516,5 +646,149 @@ struct ProviderDetailView: View {
         let prefix = String(key.prefix(4))
         let suffix = String(key.suffix(4))
         return "\(prefix)****\(suffix)"
+    }
+}
+
+private struct ProviderActiveBadge: View {
+    let accent: Color
+    var compact: Bool = false
+
+    var body: some View {
+        HStack(spacing: compact ? 5 : 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: compact ? 10 : 11, weight: .semibold))
+
+            Text("ACTIVE")
+                .font(.system(size: compact ? 10 : 11, weight: .bold, design: .monospaced))
+                .kerning(compact ? 0.4 : 0.7)
+        }
+        .foregroundStyle(accent)
+        .padding(.horizontal, compact ? 8 : 12)
+        .padding(.vertical, compact ? 4 : 7)
+        .background(
+            Capsule()
+                .fill(accent.opacity(compact ? 0.1 : 0.12))
+        )
+        .overlay {
+            Capsule()
+                .stroke(accent.opacity(compact ? 0.18 : 0.28), lineWidth: 1)
+        }
+        .shadow(color: accent.opacity(compact ? 0.1 : 0.14), radius: compact ? 8 : 12, x: 0, y: compact ? 4 : 6)
+    }
+}
+
+private struct ProviderActiveIndicator: View {
+    let accent: Color
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(accent.opacity(0.12))
+                .frame(width: 24, height: 24)
+
+            Circle()
+                .stroke(accent.opacity(0.22), lineWidth: 1)
+                .frame(width: 24, height: 24)
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(accent)
+        }
+        .shadow(color: accent.opacity(0.08), radius: 6, x: 0, y: 3)
+    }
+}
+
+private struct ConfigRowView: View {
+    let label: String
+    let value: String
+
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .kerning(0.5)
+                .foregroundStyle(AppTheme.textTertiary)
+                .frame(width: 190, alignment: .leading)
+
+            Text(value)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(AppTheme.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(value, forType: .string)
+            } label: {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .frame(width: 24, height: 24)
+                    .background(AppTheme.subtleFill)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .opacity(isHovering ? 1 : 0)
+            .animation(.easeOut(duration: 0.18), value: isHovering)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background(isHovering ? AppTheme.hoverFill.opacity(0.55) : Color.clear)
+        .onHover { hovering in
+            isHovering = hovering
+        }
+    }
+}
+
+private struct PrimaryDashboardButtonStyle: ButtonStyle {
+    let accent: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                accent.opacity(configuration.isPressed ? 0.86 : 0.98),
+                                accent.opacity(configuration.isPressed ? 0.72 : 0.82)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            }
+            .shadow(color: accent.opacity(configuration.isPressed ? 0.12 : 0.25), radius: 18, x: 0, y: 10)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
+    }
+}
+
+private struct SecondaryDashboardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(AppTheme.textPrimary)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(configuration.isPressed ? AppTheme.hoverFill : AppTheme.cardFill)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+            }
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
 }

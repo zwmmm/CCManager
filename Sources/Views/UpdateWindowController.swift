@@ -59,7 +59,7 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        !(UpdateManager.shared.isInstallingUpdate)
+        didChooseAction || !(UpdateManager.shared.isInstallingUpdate)
     }
 
     required init?(coder: NSCoder) {

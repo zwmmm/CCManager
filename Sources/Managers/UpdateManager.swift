@@ -269,14 +269,27 @@ final class UpdateManager: NSObject, ObservableObject {
 
     @MainActor
     private func relaunch(appURL: URL) {
+        let processIdentifier = ProcessInfo.processInfo.processIdentifier
         let escapedPath = appURL.path.replacingOccurrences(of: "'", with: "'\\''")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", "sleep 0.5; /usr/bin/open -n '\(escapedPath)'"]
+        process.arguments = [
+            "-c",
+            "while /bin/kill -0 \(processIdentifier) 2>/dev/null; do /bin/sleep 0.1; done; /usr/bin/open -n '\(escapedPath)'"
+        ]
         try? process.run()
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            NSApplication.shared.terminate(nil)
+        for window in NSApplication.shared.windows {
+            if let sheet = window.attachedSheet {
+                window.endSheet(sheet)
+            }
+            window.close()
+        }
+
+        NSApplication.shared.terminate(nil)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            exit(0)
         }
     }
 
