@@ -110,6 +110,39 @@ CCManager 自动将配置写入 `~/.claude/settings.json`（Claude Code）或 `~
 
 - macOS 13.0+
 
+## 🍺 Homebrew 安装
+
+如果你习惯用 Homebrew 安装 GUI 应用，可以直接执行：
+
+```bash
+brew install --cask zwmmm/tap/ccmanager
+```
+
+如果已经 tap 过仓库，也可以：
+
+```bash
+brew tap zwmmm/tap
+brew install --cask ccmanager
+```
+
+升级：
+
+```bash
+brew upgrade --cask ccmanager
+```
+
+卸载：
+
+```bash
+brew uninstall --cask ccmanager
+```
+
+说明：
+
+- 当前 Homebrew 仅用于安装 GUI 应用 `CCManager.app`
+- CLI `ccmanager` 仍然使用应用内的安装入口
+- 新版本发布后，仓库会自动更新 `zwmmm/homebrew-tap` 中的 cask 定义
+
 ## 🔨 构建
 
 ```bash
