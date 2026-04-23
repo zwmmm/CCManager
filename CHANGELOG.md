@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.1] - 2026-04-23
+
+### Others
+
+- Polish ThemeSettingsView layout with wider settings panel and improved section card padding
+
 ## [1.12.0] - 2026-04-23
 
 ### Features
