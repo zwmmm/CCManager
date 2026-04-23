@@ -79,3 +79,29 @@ final class ThemeManager: ObservableObject {
         themeColorHex = color.hex
     }
 }
+
+enum AppTheme {
+    static let background = Color(nsColor: NSColor(light: "F6F7F2", dark: "0B0E13"))
+    static let sidebar = Color(nsColor: NSColor(light: "EEF0E8", dark: "11151B"))
+    static let surface = Color(nsColor: NSColor(light: "FFFFFF", dark: "15191F"))
+    static let surfaceElevated = Color(nsColor: NSColor(light: "FAFBF7", dark: "1A1E25"))
+    static let separator = Color(nsColor: NSColor(light: "D9DCD2", dark: "2B3038"))
+    static let textPrimary = Color(nsColor: NSColor(light: "171A1F", dark: "F4F2EA"))
+    static let textSecondary = Color(nsColor: NSColor(light: "5F655F", dark: "A3A6AD"))
+    static let textTertiary = Color(nsColor: NSColor(light: "8B9089", dark: "737780"))
+    static let subtleFill = Color(nsColor: NSColor(light: "E5E8DE", dark: "FFFFFF", lightAlpha: 0.58, darkAlpha: 0.04))
+    static let hoverFill = Color(nsColor: NSColor(light: "DDE1D6", dark: "FFFFFF", lightAlpha: 0.72, darkAlpha: 0.06))
+    static let cardFill = Color(nsColor: NSColor(light: "FFFFFF", dark: "FFFFFF", lightAlpha: 0.78, darkAlpha: 0.04))
+    static let cardStroke = Color(nsColor: NSColor(light: "C9CEC1", dark: "FFFFFF", lightAlpha: 0.8, darkAlpha: 0.08))
+    static let shadow = Color(nsColor: NSColor(light: "000000", dark: "000000", lightAlpha: 0.09, darkAlpha: 0.24))
+}
+
+private extension NSColor {
+    convenience init(light: String, dark: String, lightAlpha: CGFloat = 1, darkAlpha: CGFloat = 1) {
+        self.init(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let color = NSColor(hex: isDark ? dark : light) ?? (isDark ? .black : .white)
+            return color.withAlphaComponent(isDark ? darkAlpha : lightAlpha)
+        }
+    }
+}

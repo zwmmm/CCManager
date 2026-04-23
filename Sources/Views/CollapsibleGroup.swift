@@ -16,19 +16,19 @@ struct CollapsibleGroup<Content: View>: View {
                 HStack(spacing: 8) {
                     Text(title)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AppTheme.textPrimary)
 
                     if !isExpanded {
                         Text("(\(count))")
                             .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding(.vertical, 10)

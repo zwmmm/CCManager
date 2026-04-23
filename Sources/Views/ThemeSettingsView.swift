@@ -20,218 +20,47 @@ struct ThemeSettingsView: View {
 
     // MARK: - Design Tokens
     private let horizontalPadding: CGFloat = 18
-    private let sectionGap: CGFloat = 0
+    private let sectionGap: CGFloat = 12
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("SETTINGS")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.secondary)
+            headerView
 
-                Spacer()
-
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-            }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.vertical, 14)
-
-            Divider()
-
-            ScrollView {
-                VStack(spacing: sectionGap) {
-                    // Appearance
-                    sectionHeader("APPEARANCE")
-
-                    HStack(spacing: 0) {
-                        themeOption("SYSTEM", value: "system", icon: "circle.lefthalf.filled")
-                        themeOption("LIGHT",  value: "light",  icon: "sun.max.fill")
-                        themeOption("DARK",   value: "dark",   icon: "moon.fill")
-                    }
-                    .padding(4)
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 14)
-
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
-
-                    // Theme Color
-                    sectionHeader("THEME COLOR")
-
-                    colorPickerGrid
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
-
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
-
-                    // General Settings
-                    sectionHeader("GENERAL")
-
-                    VStack(spacing: 0) {
-                        // Editor
-                        Button {
-                            showEditorPicker.toggle()
-                        } label: {
-                            HStack {
-                                Text("Editor")
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if let selected = editorManager.selectedEditor,
-                                   let icon = editorManager.icon(for: selected.bundleId) {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .frame(width: 14, height: 14)
-                                        .clipShape(RoundedRectangle(cornerRadius: 3))
-                                    Text(selected.displayName)
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .foregroundStyle(.secondary)
-                                } else {
-                                    Text("Select...")
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .foregroundStyle(.secondary)
-                                }
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .padding(.vertical, 10)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
-                            EditorPickerPopover(editorManager: editorManager) {
-                                showEditorPicker = false
-                            }
-                        }
-
-                        // Provider Grouping
-                        HStack {
-                            Text("Provider Grouping")
-                                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Toggle("", isOn: Binding(
-                                get: { ThemeManager.shared.providerGroupingEnabled },
-                                set: { newValue in
-                                    let wasEnabled = ThemeManager.shared.providerGroupingEnabled
-                                    ThemeManager.shared.providerGroupingEnabled = newValue
-                                    if !wasEnabled && newValue {
-                                        ProviderStore.shared.reassignSortOrderOnGroupingEnabled()
-                                    }
-                                }
-                            ))
-                            .toggleStyle(.switch)
-                            .labelsHidden()
-                            .tint(themeManager.brandColor)
-                        }
-                        .padding(.vertical, 10)
-
-                        if #available(macOS 13.0, *) {
-                            // Launch at Login
-                            HStack {
-                                Text("Launch at Login")
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Toggle("", isOn: Binding(
-                                    get: { launchAtLoginEnabled },
-                                    set: { newValue in
-                                        launchAtLoginEnabled = newValue
-                                        if !LaunchAtLoginManager.shared.setEnabled(newValue) {
-                                            launchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
-                                        }
-                                    }
-                                ))
-                                .toggleStyle(.switch)
-                                .labelsHidden()
-                                .tint(themeManager.brandColor)
-                            }
-                            .padding(.vertical, 10)
-                        }
-
-                        // Import / Export
-                        HStack {
-                            Text("Import / Export")
-                                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            HStack(spacing: 6) {
-                                Button {
-                                    exportProviders()
-                                } label: {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 10, weight: .medium))
-                                }
-                                .buttonStyle(.bordered)
-                                .tint(themeManager.brandColor)
-
-                                Button {
-                                    importProviders()
-                                } label: {
-                                    Image(systemName: "square.and.arrow.down")
-                                        .font(.system(size: 10, weight: .medium))
-                                }
-                                .buttonStyle(.bordered)
-                                .tint(themeManager.brandColor)
-                            }
-                        }
-                        .padding(.vertical, 10)
-                    }
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 14)
-
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
-
-                    // CLI Installation
-                    sectionHeader("CLI")
-
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: sectionGap) {
+                    appearanceSection
+                    colorSection
+                    generalSection
                     cliSection
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
-
-                    Divider()
-                        .padding(.horizontal, horizontalPadding)
-
-                    // About
-                    sectionHeader("ABOUT")
-
                     aboutSection
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
                 }
-            }
-
-            Divider()
-
-            HStack {
-                Spacer()
-                Button("Done") {
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(themeManager.brandColor)
                 .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, 12)
             }
+
+            footerView
         }
         .frame(width: 340)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(
+            ZStack {
+                AppTheme.background
+
+                LinearGradient(
+                    colors: [
+                        AppTheme.surface.opacity(0.42),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        )
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(AppTheme.separator)
+                .frame(height: 1)
+        }
+        .fontDesign(.monospaced)
         .task {
             refreshInstallationStates()
         }
@@ -243,6 +72,152 @@ struct ThemeSettingsView: View {
         if #available(macOS 13.0, *) {
             Task {
                 launchAtLoginEnabled = await LaunchAtLoginManager.shared.refreshStatusAsync()
+            }
+        }
+    }
+
+    private var headerView: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Settings")
+                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Text("Theme, editor, and runtime integrations")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .frame(width: 26, height: 26)
+                    .background(AppTheme.cardFill)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(AppTheme.cardStroke, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+        }
+        .padding(.horizontal, horizontalPadding)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+    }
+
+    private var footerView: some View {
+        HStack {
+            Spacer()
+
+            Button("Done") {
+                dismiss()
+            }
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .buttonStyle(.borderedProminent)
+            .tint(themeManager.brandColor)
+        }
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, 12)
+        .background(AppTheme.surface.opacity(0.38))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(AppTheme.separator)
+                .frame(height: 1)
+        }
+    }
+
+    private var appearanceSection: some View {
+        sectionCard {
+            sectionHeader("Appearance")
+
+            HStack(spacing: 8) {
+                themeOption("System", value: "system", icon: "circle.lefthalf.filled")
+                themeOption("Light", value: "light", icon: "sun.max.fill")
+                themeOption("Dark", value: "dark", icon: "moon.fill")
+            }
+        }
+    }
+
+    private var colorSection: some View {
+        sectionCard {
+            sectionHeader("Theme Color")
+            colorPickerGrid
+        }
+    }
+
+    private var generalSection: some View {
+        sectionCard {
+            sectionHeader("General")
+
+            VStack(spacing: 0) {
+                editorSettingRow
+                .popover(isPresented: $showEditorPicker, arrowEdge: .bottom) {
+                    EditorPickerPopover(editorManager: editorManager) {
+                        showEditorPicker = false
+                    }
+                }
+
+                separatorLine
+
+                settingToggleRow(
+                    title: "Provider Grouping",
+                    isOn: Binding(
+                        get: { ThemeManager.shared.providerGroupingEnabled },
+                        set: { newValue in
+                            let wasEnabled = ThemeManager.shared.providerGroupingEnabled
+                            ThemeManager.shared.providerGroupingEnabled = newValue
+                            if !wasEnabled && newValue {
+                                ProviderStore.shared.reassignSortOrderOnGroupingEnabled()
+                            }
+                        }
+                    )
+                )
+
+                if #available(macOS 13.0, *) {
+                    separatorLine
+
+                    settingToggleRow(
+                        title: "Launch at Login",
+                        isOn: Binding(
+                            get: { launchAtLoginEnabled },
+                            set: { newValue in
+                                launchAtLoginEnabled = newValue
+                                if !LaunchAtLoginManager.shared.setEnabled(newValue) {
+                                    launchAtLoginEnabled = LaunchAtLoginManager.shared.isEnabled
+                                }
+                            }
+                        )
+                    )
+                }
+
+                separatorLine
+
+                HStack(spacing: 10) {
+                    Text("Import / Export")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(AppTheme.textPrimary)
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        iconActionButton(systemName: "square.and.arrow.up") {
+                            exportProviders()
+                        }
+
+                        iconActionButton(systemName: "square.and.arrow.down") {
+                            importProviders()
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
             }
         }
     }
@@ -263,10 +238,13 @@ struct ThemeSettingsView: View {
                                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(selectedCategory == category ? themeManager.brandColor.opacity(0.2) : Color.clear)
-                                .foregroundStyle(selectedCategory == category ? themeManager.brandColor : .secondary)
+                                .background(selectedCategory == category ? themeManager.brandColor.opacity(0.14) : AppTheme.cardFill)
+                                .foregroundStyle(selectedCategory == category ? themeManager.brandColor : AppTheme.textSecondary)
                                 .contentShape(Rectangle())
                                 .clipShape(Capsule())
+                                .overlay(
+                                    Capsule().stroke(selectedCategory == category ? themeManager.brandColor.opacity(0.18) : AppTheme.cardStroke, lineWidth: 1)
+                                )
                         }
                         .buttonStyle(.plain)
                     }
@@ -283,8 +261,12 @@ struct ThemeSettingsView: View {
                 }
             }
             .padding(8)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .background(AppTheme.cardFill)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(AppTheme.cardStroke, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
@@ -300,12 +282,12 @@ struct ThemeSettingsView: View {
                 ZStack {
                     Circle()
                         .fill(color.color)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 30, height: 30)
 
                     if isSelected {
                         Circle()
                             .strokeBorder(Color.white, lineWidth: 2)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 30, height: 30)
 
                         Image(systemName: "checkmark")
                             .font(.system(size: 10, weight: .bold))
@@ -316,7 +298,7 @@ struct ThemeSettingsView: View {
 
                 Text(color.name)
                     .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(isSelected ? themeManager.brandColor : .secondary)
+                    .foregroundStyle(isSelected ? themeManager.brandColor : AppTheme.textSecondary)
                     .lineLimit(1)
             }
             .contentShape(Rectangle())
@@ -330,12 +312,10 @@ struct ThemeSettingsView: View {
         HStack {
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.textTertiary)
             Spacer()
         }
-        .padding(.horizontal, horizontalPadding)
-        .padding(.top, 16)
-        .padding(.bottom, 10)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Theme Option
@@ -351,31 +331,46 @@ struct ThemeSettingsView: View {
                 Image(systemName: icon)
                     .font(.system(size: 12, weight: .medium))
                 Text(label)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(isSelected ? themeManager.brandColor.opacity(0.25) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.vertical, 9)
+            .background(isSelected ? themeManager.brandColor.opacity(0.14) : AppTheme.cardFill)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isSelected ? themeManager.brandColor.opacity(0.18) : AppTheme.cardStroke, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isSelected ? themeManager.brandColor : .primary)
+        .foregroundStyle(isSelected ? themeManager.brandColor : AppTheme.textPrimary)
     }
 
     // MARK: - CLI Section
     private var cliSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("CLI PATH")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.primary)
+        sectionCard {
+            sectionHeader("CLI")
+
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CLI Path")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(AppTheme.textPrimary)
+
+                    if !cliInstaller.installStatus.isEmpty {
+                        Text(cliInstaller.installStatus)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(AppTheme.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
 
                 Spacer()
 
                 if cliInstaller.isInstalling {
                     ProgressView()
-                        .scaleEffect(0.7)
+                        .scaleEffect(0.72)
                         .frame(width: 20, height: 20)
                 } else {
                     Button {
@@ -389,63 +384,151 @@ struct ThemeSettingsView: View {
                     } label: {
                         Text(cliInstaller.isInstalled ? "Remove" : "Install")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(cliInstaller.isInstalled ? .red : themeManager.brandColor)
                 }
             }
-
-            if !cliInstaller.installStatus.isEmpty {
-                Text(cliInstaller.installStatus)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
         }
-        .padding(.vertical, 8)
     }
 
     // MARK: - About Section
     private var aboutSection: some View {
-        HStack(spacing: 0) {
-            // Version info
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Version")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                Text(updateManager.currentVersion)
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.primary)
+        sectionCard {
+            sectionHeader("About")
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Version")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(AppTheme.textTertiary)
+                    Text(updateManager.currentVersion)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(AppTheme.textPrimary)
+                }
+
+                Spacer()
+
+                Button {
+                    updateManager.checkForUpdates()
+                } label: {
+                    HStack(spacing: 6) {
+                        if updateManager.isChecking {
+                            ProgressView()
+                                .scaleEffect(0.55)
+                                .frame(width: 10, height: 10)
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        Text("Check for Updates")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(themeManager.brandColor.opacity(0.12))
+                    .overlay(
+                        Capsule().stroke(themeManager.brandColor.opacity(0.16), lineWidth: 1)
+                    )
+                    .clipShape(Capsule())
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!updateManager.canCheckForUpdates)
+                .opacity(updateManager.canCheckForUpdates ? 1.0 : 0.5)
             }
+        }
+    }
+
+    private var separatorLine: some View {
+        Rectangle()
+            .fill(AppTheme.separator)
+            .frame(height: 1)
+    }
+
+    private func sectionCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content()
+        }
+        .padding(12)
+        .background(AppTheme.cardFill)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(AppTheme.cardStroke, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: AppTheme.shadow, radius: 10, x: 0, y: 5)
+    }
+
+    private func settingToggleRow(title: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 10) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(AppTheme.textPrimary)
 
             Spacer()
 
-            // Check for updates button
-            Button {
-                updateManager.checkForUpdates()
-            } label: {
-                HStack(spacing: 6) {
-                    if updateManager.isChecking {
-                        ProgressView()
-                            .scaleEffect(0.55)
-                            .frame(width: 10, height: 10)
-                    } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 10, weight: .medium))
-                    }
-                    Text("Check for Updates")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(themeManager.brandColor.opacity(0.15))
-                .clipShape(Capsule())
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!updateManager.canCheckForUpdates)
-            .opacity(updateManager.canCheckForUpdates ? 1.0 : 0.5)
+            Toggle("", isOn: isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .tint(themeManager.brandColor)
         }
+        .padding(.vertical, 8)
+    }
+
+    private func iconActionButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 10, weight: .medium))
+                .frame(width: 26, height: 26)
+                .background(AppTheme.cardFill)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(AppTheme.cardStroke, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var editorSettingRow: some View {
+        Button {
+            showEditorPicker.toggle()
+        } label: {
+            HStack(spacing: 10) {
+                Text("Editor")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Spacer()
+
+                if let selected = editorManager.selectedEditor,
+                   let icon = editorManager.icon(for: selected.bundleId) {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .frame(width: 14, height: 14)
+                        .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+
+                    Text(selected.displayName)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .lineLimit(1)
+                } else {
+                    Text("Select...")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(AppTheme.textSecondary)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(AppTheme.textTertiary)
+            }
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Actions
@@ -520,16 +603,23 @@ private struct EditorPickerPopover: View {
     var body: some View {
         let editors = editorManager.installed
 
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             if editors.isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textTertiary)
                     Text("No supported editors found")
                         .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
-                .padding(16)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(AppTheme.cardFill)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(AppTheme.cardStroke, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             } else {
                 ForEach(editors) { editor in
                     let isSelected = editorManager.selectedBundleId == editor.bundleId
@@ -548,7 +638,7 @@ private struct EditorPickerPopover: View {
 
                             Text(editor.displayName)
                                 .font(.system(size: 13, weight: isSelected ? .semibold : .regular, design: .monospaced))
-                                .foregroundStyle(isSelected ? themeManager.brandColor : .primary)
+                                .foregroundStyle(isSelected ? themeManager.brandColor : AppTheme.textPrimary)
 
                             Spacer()
 
@@ -560,8 +650,12 @@ private struct EditorPickerPopover: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(isSelected ? themeManager.brandColor.opacity(0.08) : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .background(isSelected ? themeManager.brandColor.opacity(0.08) : AppTheme.cardFill)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .stroke(isSelected ? themeManager.brandColor.opacity(0.18) : AppTheme.cardStroke, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -569,6 +663,7 @@ private struct EditorPickerPopover: View {
             }
         }
         .padding(6)
-        .frame(width: 264)
+        .frame(width: 276)
+        .background(AppTheme.background)
     }
 }

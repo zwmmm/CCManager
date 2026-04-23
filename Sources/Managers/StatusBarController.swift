@@ -124,7 +124,7 @@ final class StatusMenuPanel: NSPanel {
         self.onPanelHidden = onPanelHidden
 
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 280, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 316, height: 430),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -140,6 +140,7 @@ final class StatusMenuPanel: NSPanel {
         becomesKeyOnlyIfNeeded = true
         acceptsMouseMovedEvents = true
         hasShadow = true
+        isOpaque = false
         backgroundColor = .clear
 
         let menuView = StatusBarMenuView(
@@ -152,7 +153,9 @@ final class StatusMenuPanel: NSPanel {
         .environmentObject(EditorManager.shared)
 
         let hostingView = NSHostingView(rootView: menuView)
-        hostingView.frame = NSRect(x: 0, y: 0, width: 280, height: 400)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 316, height: 430)
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
 
         contentView = hostingView
     }
@@ -160,8 +163,8 @@ final class StatusMenuPanel: NSPanel {
     func positionNear(buttonFrame: NSRect?) {
         guard let buttonFrame = buttonFrame else { return }
 
-        let panelWidth: CGFloat = 280
-        let panelHeight: CGFloat = 400
+        let panelWidth: CGFloat = 316
+        let panelHeight: CGFloat = 430
         let margin: CGFloat = 8
 
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
@@ -201,116 +204,96 @@ struct StatusBarMenuView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("CC Manager")
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.primary)
-                Spacer()
-                Button {
-                    onOpenMainWindow()
-                } label: {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(themeManager.brandColor)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            headerView
 
-            Divider()
-
-            // Provider List
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Claude Code Section
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
                     if !claudeProviders.isEmpty {
-                        SectionHeader(title: "Claude Code")
-                        ForEach(claudeProviders) { provider in
-                            ProviderMenuRowView(
-                                provider: provider,
-                                isActive: provider.isActive,
-                                isPressed: pressedProviderId == provider.id,
-                                onTap: {
-                                    withAnimation(.easeOut(duration: 0.12)) {
-                                        pressedProviderId = provider.id
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                                        pressedProviderId = nil
-                                        onSelectProvider(provider)
-                                    }
-                                }
-                            )
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-
-                    // Codex Section
-                    if !codexProviders.isEmpty {
-                        SectionHeader(title: "Codex")
-                        ForEach(codexProviders) { provider in
-                            ProviderMenuRowView(
-                                provider: provider,
-                                isActive: provider.isActive,
-                                isPressed: pressedProviderId == provider.id,
-                                onTap: {
-                                    withAnimation(.easeOut(duration: 0.12)) {
-                                        pressedProviderId = provider.id
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                                        pressedProviderId = nil
-                                        onSelectProvider(provider)
-                                    }
-                                }
-                            )
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-
-                    // Empty State
-                    if providerStore.providers.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "server.rack")
-                                .font(.system(size: 32, weight: .light))
-                                .foregroundStyle(.secondary)
-
-                            Text("No Providers")
-                                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.secondary)
-
-                            Button {
-                                onOpenMainWindow()
-                            } label: {
-                                Text("Add Provider")
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        statusMenuSection(title: "Claude Code", count: claudeProviders.count) {
+                            ForEach(claudeProviders) { provider in
+                                providerRow(provider)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(themeManager.brandColor)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 40)
+                    }
+
+                    if !codexProviders.isEmpty {
+                        statusMenuSection(title: "Codex", count: codexProviders.count) {
+                            ForEach(codexProviders) { provider in
+                                providerRow(provider)
+                            }
+                        }
+                    }
+
+                    if providerStore.providers.isEmpty {
+                        emptyStateView
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
             }
 
-            Divider()
+            footerView
+        }
+        .frame(width: 316, height: 430)
+        .background(AppTheme.background)
+        .fontDesign(.monospaced)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
 
-            // Footer
-            HStack {
+    private var headerView: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("CC Manager")
+                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Text("Provider routing")
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+
+            Spacer()
+
+            Button {
+                onOpenMainWindow()
+            } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .frame(width: 30, height: 30)
+                    .background(AppTheme.cardFill)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 15)
+        .padding(.bottom, 12)
+    }
+
+    private var footerView: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(AppTheme.separator)
+                .frame(height: 1)
+
+            HStack(spacing: 10) {
                 Button {
                     onQuit()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 7) {
                         Image(systemName: "power")
-                            .font(.system(size: 11))
+                            .font(.system(size: 10, weight: .semibold))
                         Text("Quit")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     }
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.cardFill)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
 
                 Spacer()
 
@@ -322,31 +305,123 @@ struct StatusBarMenuView: View {
                         openConfig(for: .codex)
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 7) {
                         Image(systemName: "gearshape")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: .semibold))
                         Text("Config")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(themeManager.brandColor)
-                    .foregroundStyle(.black)
-                    .clipShape(Capsule())
+                    .foregroundStyle(.white.opacity(0.94))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 7)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                themeManager.brandColor.opacity(0.86),
+                                themeManager.brandColor.opacity(0.66)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .shadow(color: themeManager.brandColor.opacity(0.18), radius: 10, x: 0, y: 6)
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .background(AppTheme.surface.opacity(0.38))
         }
-        .frame(width: 280, height: 400)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.subtleFill)
+                    .frame(width: 64, height: 64)
+
+                Image(systemName: "server.rack")
+                    .font(.system(size: 22, weight: .light))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+
+            VStack(spacing: 5) {
+                Text("No Providers")
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Text("Open the app to add your first config.")
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+
+            Button {
+                onOpenMainWindow()
+            } label: {
+                Text("Add Provider")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 7)
+            }
+            .buttonStyle(.plain)
+            .background(themeManager.brandColor.opacity(0.14))
+            .foregroundStyle(AppTheme.textPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+    }
+
+    private func statusMenuSection<Content: View>(
+        title: String,
+        count: Int,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .kerning(0.7)
+                    .foregroundStyle(AppTheme.textTertiary)
+
+                Text("\(count)")
+                    .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(AppTheme.textTertiary)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(AppTheme.cardFill)
+                    .clipShape(Capsule())
+
+                Spacer()
+            }
+            .padding(.horizontal, 2)
+
+            VStack(spacing: 4) {
+                content()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func providerRow(_ provider: Provider) -> some View {
+        ProviderMenuRowView(
+            provider: provider,
+            isActive: provider.isActive,
+            isPressed: pressedProviderId == provider.id,
+            onTap: {
+                withAnimation(.easeOut(duration: 0.12)) {
+                    pressedProviderId = provider.id
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    pressedProviderId = nil
+                    onSelectProvider(provider)
+                }
+            }
         )
+        .frame(maxWidth: .infinity)
     }
 
     private var claudeProviders: [Provider] {
@@ -403,43 +478,68 @@ struct ProviderMenuRowView: View {
     @State private var isHovered = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            CachedPixelAvatarView(
-                name: provider.name,
-                type: provider.type,
-                size: 28
-            )
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(isActive ? themeManager.brandColor.opacity(0.14) : AppTheme.subtleFill)
+                    .frame(width: 36, height: 36)
 
-            VStack(alignment: .leading, spacing: 2) {
+                CachedPixelAvatarView(
+                    name: provider.name,
+                    type: provider.type,
+                    size: 26
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(provider.name)
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 12.5, weight: isActive ? .semibold : .medium, design: .monospaced))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
 
                 if let model = provider.model, !model.isEmpty {
                     Text(model)
-                        .font(.system(size: 10, weight: .regular, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .lineLimit(1)
+                } else {
+                    Text(provider.type.rawValue)
+                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                        .foregroundStyle(AppTheme.textTertiary)
                         .lineLimit(1)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             if isActive {
-                Circle()
-                    .fill(themeManager.brandColor)
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(isPressed ? 1.5 : 1.0)
+                ZStack {
+                    Circle()
+                        .fill(themeManager.brandColor.opacity(0.13))
+                        .frame(width: 22, height: 22)
+
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundStyle(themeManager.brandColor)
+                }
+                    .scaleEffect(isPressed ? 1.08 : 1.0)
                     .animation(.easeOut(duration: 0.12), value: isPressed)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isActive ? themeManager.brandColor.opacity(0.1) : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(
+                    isActive
+                        ? themeManager.brandColor.opacity(0.12)
+                        : (isHovered ? AppTheme.hoverFill : Color.clear)
+                )
+        )
+        .shadow(color: isActive ? themeManager.brandColor.opacity(0.05) : .clear, radius: 8, x: 0, y: 4)
         .contentShape(Rectangle())
-        .scaleEffect(isPressed ? 0.97 : (isHovered ? 1.01 : 1.0))
+        .scaleEffect(isPressed ? 0.975 : 1.0)
         .animation(.easeOut(duration: 0.12), value: isPressed)
         .animation(.easeOut(duration: 0.15), value: isHovered)
         .onTapGesture {
@@ -448,22 +548,5 @@ struct ProviderMenuRowView: View {
         .onHover { hovering in
             isHovered = hovering
         }
-    }
-}
-
-// MARK: - Section Header (no icon)
-
-struct SectionHeader: View {
-    let title: String
-
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-            Spacer()
-        }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 }
