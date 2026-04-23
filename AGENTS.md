@@ -58,6 +58,13 @@ Manager 单例 (Sources/Managers/):
 
 @DESIGN.md
 
+- 偏好紧凑、克制的开发者工具风格，参考 Linear / Raycast / Vercel，而不是展示型 marketing UI
+- 默认深色模式，减少多余外层背景、过大的圆角容器和装饰性渐变
+- 优先通过留白、低对比层次、轻阴影和细描边建立质感，避免厚重边框和高饱和配色
+- 字号、头像、按钮和卡片高度保持紧凑，优先避免主界面出现不必要的滚动条
+- 状态展示必须有明确语义：不能点击的控件不要做成 switch；列表中的状态仅在能提供有效信息时显示
+- Provider 详情头部优先使用节省高度的横向信息布局，避免过高的居中 hero 区
+
 # NEVER
 
 - 禁止修改 `project.yml` 以外的 Xcode 项目文件（`.xcodeproj` 由 xcodegen 生成）

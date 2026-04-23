@@ -8,12 +8,17 @@ struct ChineseColor: Identifiable, Hashable {
     let category: ColorCategory
 
     var color: Color {
-        Color(hex: hex)
+        cachedColor
     }
 
     var ns_color: NSColor {
-        NSColor(hex: hex) ?? .systemGreen
+        cachedNSColor
     }
+
+    // Pre-cached SwiftUI Color to avoid repeated hex parsing
+    private let cachedColor: Color
+    // Pre-cached NSColor to avoid repeated hex parsing
+    private let cachedNSColor: NSColor
 
     enum ColorCategory: String, CaseIterable {
         case group0 = "白月"
@@ -26,6 +31,15 @@ struct ChineseColor: Identifiable, Hashable {
         case group7 = "晴岚"
         case group8 = "暮山"
         case group9 = "桃夭"
+    }
+
+    init(name: String, pinyin: String, hex: String, category: ColorCategory) {
+        self.name = name
+        self.pinyin = pinyin
+        self.hex = hex
+        self.category = category
+        self.cachedColor = Color(hex: hex)
+        self.cachedNSColor = NSColor(hex: hex) ?? .systemGreen
     }
 }
 

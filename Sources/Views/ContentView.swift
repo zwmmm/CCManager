@@ -271,7 +271,7 @@ struct SidebarView: View {
                 Circle()
                     .fill(isSelected ? themeManager.brandColor.opacity(0.14) : AppTheme.subtleFill)
                     .frame(width: 40, height: 40)
-                PixelAvatarView(name: provider.name, type: provider.type, size: 28)
+                CachedPixelAvatarView(name: provider.name, type: provider.type, size: 28)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -463,7 +463,7 @@ struct ProviderDetailView: View {
                                     .stroke(AppTheme.cardStroke, lineWidth: 1)
                             }
 
-                        PixelAvatarView(name: provider.name, type: provider.type, size: 60)
+                        CachedPixelAvatarView(name: provider.name, type: provider.type, size: 60)
                     }
                     .shadow(color: AppTheme.shadow, radius: 14, x: 0, y: 8)
 

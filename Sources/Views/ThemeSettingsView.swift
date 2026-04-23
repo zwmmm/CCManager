@@ -253,7 +253,7 @@ struct ThemeSettingsView: View {
 
             // Color grid
             let filteredColors = ColorPalette.colorsByCategory[selectedCategory] ?? []
-            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
+            let columns = Array(repeating: GridItem(.fixed(52), spacing: 8), count: 5)
 
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(filteredColors) { color in
@@ -261,12 +261,6 @@ struct ThemeSettingsView: View {
                 }
             }
             .padding(8)
-            .background(AppTheme.cardFill)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(AppTheme.cardStroke, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
