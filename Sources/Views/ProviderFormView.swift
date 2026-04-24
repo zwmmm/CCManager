@@ -48,8 +48,8 @@ struct ProviderFormView: View {
     private var modelPlaceholder: String {
         switch type {
         case .claudeCode: return "claude-sonnet-4-20250514"
-        case .codex: return "gpt-4o"
-        case .codexOAuth: return "gpt-4o"
+        case .codex: return PresetProvider.defaultCodexModel
+        case .codexOAuth: return PresetProvider.defaultCodexModel
         }
     }
 
@@ -114,17 +114,25 @@ struct ProviderFormView: View {
                                     Spacer(minLength: 8)
 
                                     HStack(spacing: 8) {
-                                        Button("Refresh Token") {
+                                        Button {
                                             showOAuthLogin = true
+                                        } label: {
+                                            Image(systemName: "arrow.clockwise")
+                                                .font(.system(size: 11, weight: .semibold))
                                         }
-                                        .buttonStyle(FormSecondaryButtonStyle())
+                                        .buttonStyle(FormIconButtonStyle())
+                                        .help("Refresh Token")
 
-                                        Button("Logout") {
+                                        Button {
                                             oauthIsLoggedIn = false
                                             oauthDisplayName = ""
                                             pendingOauthTokens = nil
+                                        } label: {
+                                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                                .font(.system(size: 11, weight: .semibold))
                                         }
-                                        .buttonStyle(FormSecondaryButtonStyle())
+                                        .buttonStyle(FormIconButtonStyle())
+                                        .help("Logout")
                                     }
                                 }
                                 .padding(12)

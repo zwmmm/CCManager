@@ -744,9 +744,9 @@ struct ProviderDetailView: View {
         case .claudeCode:
             return ConfigLabels(apiKey: "ANTHROPIC_AUTH_TOKEN", baseUrl: "ANTHROPIC_BASE_URL", model: "ANTHROPIC_MODEL")
         case .codex:
-            return ConfigLabels(apiKey: "api_key", baseUrl: "base_url", model: "model")
+            return ConfigLabels(apiKey: "api_key", baseUrl: "base_url", model: "MODEL")
         case .codexOAuth:
-            return ConfigLabels(apiKey: "oauth_access_token", baseUrl: "base_url", model: "model")
+            return ConfigLabels(apiKey: "oauth_access_token", baseUrl: "base_url", model: "MODEL")
         }
     }
 

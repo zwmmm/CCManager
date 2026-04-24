@@ -78,7 +78,7 @@ struct PresetProvider {
     let model: String?
 
     static let defaultClaudeModel = "claude-sonnet-4-20250514"
-    static let defaultCodexModel = "gpt-5.4"
+    static let defaultCodexModel = "gpt-5.5"
 
     static let presets: [PresetProvider] = [
         // Claude Code
