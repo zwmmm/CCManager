@@ -4,6 +4,9 @@ import SwiftUI
 extension Notification.Name {
     static let openSettings = Notification.Name("openSettings")
     static let restoreMainWindow = Notification.Name("restoreMainWindow")
+    static let newProvider = Notification.Name("newProvider")
+    static let editSelectedProvider = Notification.Name("editSelectedProvider")
+    static let applySelectedProvider = Notification.Name("applySelectedProvider")
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -55,6 +58,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.post(name: .openSettings, object: nil)
     }
 
+    @objc private func newProvider() {
+        NotificationCenter.default.post(name: .newProvider, object: nil)
+    }
+
+    @objc private func editSelectedProvider() {
+        NotificationCenter.default.post(name: .editSelectedProvider, object: nil)
+    }
+
+    @objc private func applySelectedProvider() {
+        NotificationCenter.default.post(name: .applySelectedProvider, object: nil)
+    }
+
     @objc private func handleRestoreMainWindow() {
         NSApp.activate(ignoringOtherApps: true)
         if let window = window {
@@ -98,13 +113,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         editMenu.addItem(withTitle: "Paste",      action: #selector(NSText.paste(_:)),        keyEquivalent: "v")
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)),     keyEquivalent: "a")
 
+        // Provider menu
+        let providerMenuItem = NSMenuItem()
+        mainMenu.addItem(providerMenuItem)
+        let providerMenu = NSMenu(title: "Provider")
+        providerMenuItem.submenu = providerMenu
+        providerMenu.addItem(withTitle: "New Provider", action: #selector(newProvider), keyEquivalent: "t")
+        providerMenu.addItem(withTitle: "Edit Selected", action: #selector(editSelectedProvider), keyEquivalent: "e")
+        providerMenu.addItem(withTitle: "Apply Selected", action: #selector(applySelectedProvider), keyEquivalent: "\r")
+        providerMenu.addItem(.separator())
+        providerMenu.addItem(withTitle: "Settings", action: #selector(openSettings), keyEquivalent: ",")
+
         // Window menu with shortcuts
         let windowMenuItem = NSMenuItem()
         mainMenu.addItem(windowMenuItem)
         let windowMenu = NSMenu(title: "Window")
         windowMenuItem.submenu = windowMenu
-        windowMenu.addItem(withTitle: "Settings", action: #selector(openSettings), keyEquivalent: ",")
-        windowMenu.addItem(.separator())
+        windowMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
         windowMenu.addItem(withTitle: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
 

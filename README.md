@@ -1,160 +1,105 @@
-# CCManager ✨
+# CCManager
 
-> macOS 菜单栏小工具，管理 AI CLI Provider 配置，一键切换超方便！
+> macOS 菜单栏 Provider 管理工具，为 Claude Code 和 Codex 快速切换 API 配置。
 
-<img width="1702" height="1228" alt="image" src="https://github.com/user-attachments/assets/370eda37-0bff-46d8-95bb-346595eb58a5" />
+[![Release](https://img.shields.io/github/v/release/zwmmm/CCManager?style=flat-square)](https://github.com/zwmmm/CCManager/releases)
+[![macOS](https://img.shields.io/badge/macOS-13.0%2B-black?style=flat-square&logo=apple)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift)](https://swift.org/)
+[![Homebrew](https://img.shields.io/badge/Homebrew-cask-FBB040?style=flat-square&logo=homebrew&logoColor=000)](https://brew.sh/)
+[![XcodeGen](https://img.shields.io/badge/project-XcodeGen-blue?style=flat-square)](https://github.com/yonaskolb/XcodeGen)
 
+<img width="1702" height="1228" alt="CCManager 主界面" src="https://github.com/user-attachments/assets/370eda37-0bff-46d8-95bb-346595eb58a5" />
 
----
+## 下载与安装
 
-## 🤔 为什么要做这个项目
-
-之前用过 CC Switch 等类似工具，功能很全，但用下来有几个痛点：
-
-- 每个供应商都有单独的配置窗口，配置合并逻辑复杂，经常出现**覆盖配置**的问题
-- 软件本身越来越重，塞进了太多功能
-
-CCManager 的核心理念很简单：
-
-> **只改端点 URL、API Key 和自定义模型名称，其他配置一概不碰。**
-
-如果确实需要修改其他配置，点击底部 ✏️ 按钮就能**一键打开配置文件**，用你喜欢的编辑器（VS Code、Xcode 等）直接改，体验更好。
-
-另外新增了 CLI 模式，让 AI 在执行 bash 命令时自动切换供应商。至于 skills 管理这类需求，交给 `npx skills` 这种专业工具就好，**不要什么都做，专业的事交给专业的软件**。
-
----
-
-## 😎 功能一览
-
-### Provider 管理
-支持 **Claude Code** 和 **Codex** 两大 CLI 工具
-
-- 🟢 Claude Code：GLM、MiniMax、Kimi、Anthropic、OpenRouter 等
-- 🔵 Codex：OpenAI、OpenRouter 等
-
-每个 Provider 都能独立配置：
-- 🔑 API Key
-- 🌐 Base URL
-- 🤖 主模型
-- ⚡ 独立配置 Sonnet / Opus / Haiku / Thinking 模型
-
-内置多个常用预设，开箱即用！
-
-### ⚡ 一键切换
-
-<img width="676" height="904" alt="image" src="https://github.com/user-attachments/assets/956d9829-cc80-4056-8499-3c60dc5751a9" />
-
-
-右键点击菜单栏，展示切换面板 ✨
-
-CCManager 自动将配置写入 `~/.claude/settings.json`（Claude Code）或 `~/.codex/config.toml`（Codex），**无需手动改文件**。
-
-### 🧪 连接测试
-添加或编辑 Provider 时，可实时测试 API 连接是否正常，避免配置错误白忙活~
-
-### 🎨 主题定制
-- 💡 跟随系统自动切换深色/浅色模式
-- 🌈 500+ 种预设配色方案，随心切换
-- 🍎 纯 SwiftUI 原生 UI，简洁又好看
-
-### 🔄 自动更新
-- ✅ 启动时自动检查更新，运行期间定时后台检查
-- 🆕 发现新版本后展示自定义更新弹窗和 Markdown 更新内容
-- 📦 点击安装后下载更新包、校验、替换应用并自动重启
-
-### 📥 配置导入导出
-- 💾 一键导出所有 Provider 配置为 JSON 文件
-- 📤 从 JSON 文件导入 Provider 配置，方便迁移和备份
-
----
-
-## ⚙️ Settings 功能
-
-点击底部 ⚙️ 按钮打开设置面板：
-
-### 🎭 外观
-- **主题模式**：跟随系统 / 浅色 / 深色
-- **主题配色**：500+ 种预设配色，按色彩风格分组（青、赤、黄、白等）
-
-### 📝 编辑器
-选择外部编辑器（VS Code、Xcode 等），用于直接打开 Provider 的配置文件。
-
-### 💾 数据管理
-- **Export**：将所有 Provider 配置导出为 JSON
-- **Import**：从 JSON 文件导入 Provider 配置
-
-### 🚀 开机自启
-开启后，CCManager 将在每次登录时自动启动。
-
-### 💻 CLI
-安装或移除 CCManagerCLI 命令行工具，配合 Git hooks 可在 commit 时自动切换 Provider。
-
-### ℹ️ 关于
-- 查看当前版本号
-- 手动检查更新（自动检查默认开启，发现新版本后弹窗提示）
-
----
-
-## 🌟 为什么选择 CCManager
-
-| 特性 | 说明 |
-|------|------|
-| 🪶 **轻量** | 菜单栏常驻，占用资源极少 |
-| 🍎 **原生 UI** | 纯 SwiftUI 开发，视觉效果出色 |
-| 🔒 **安全** | 配置本地 SQLite 存储，API Key 不外泄 |
-| ⚡ **高效** | 无需编辑配置文件，一键切换立即生效 |
-
----
-
-## 📦 系统需求
-
-- macOS 13.0+
-
-## 🍺 Homebrew 安装
-
-如果你习惯用 Homebrew 安装 GUI 应用，可以直接执行：
+### Homebrew
 
 ```bash
 brew install --cask zwmmm/tap/ccmanager
 ```
 
-如果已经 tap 过仓库，也可以：
+如果已经 tap 过仓库：
 
 ```bash
 brew tap zwmmm/tap
 brew install --cask ccmanager
 ```
 
-升级：
+升级或卸载：
 
 ```bash
 brew upgrade --cask ccmanager
-```
-
-卸载：
-
-```bash
 brew uninstall --cask ccmanager
 ```
 
-说明：
+### GitHub Releases
 
-- 当前 Homebrew 仅用于安装 GUI 应用 `CCManager.app`
-- CLI `ccmanager` 仍然使用应用内的安装入口
-- 新版本发布后，仓库会自动更新 `zwmmm/homebrew-tap` 中的 cask 定义
+也可以从 [Releases](https://github.com/zwmmm/CCManager/releases) 下载最新版本。
 
-## 🔨 构建
+> Homebrew 仅安装 GUI 应用 `CCManager.app`；CLI 命令 `ccmanager` 请在应用内的设置面板安装。
+
+## 快速使用
+
+1. 启动 CCManager，在菜单栏找到应用图标。
+2. 添加 Claude Code 或 Codex Provider。
+3. 右键菜单栏图标，选择要激活的 Provider。
+4. CCManager 会写入对应配置文件：`~/.claude/settings.json` 或 `~/.codex/config.toml`。
+
+<img width="676" height="904" alt="菜单栏 Provider 切换面板" src="https://github.com/user-attachments/assets/956d9829-cc80-4056-8499-3c60dc5751a9" />
+
+## 核心功能
+
+- **Provider 管理**：支持 Claude Code、Codex，以及 OpenAI、Anthropic、GLM、MiniMax、Kimi、OpenRouter 等常用预设。
+- **一键切换**：只更新端点 URL、API Key 和模型配置，不覆盖其它手写配置。
+- **连接测试**：添加或编辑 Provider 时可直接测试 API 是否可用。
+- **配置编辑**：可用 VS Code、Xcode 等外部编辑器打开原始配置文件。
+- **导入导出**：将 Provider 配置导出为 JSON，或从 JSON 恢复。
+- **自动更新**：启动和运行期间自动检查新版本。
+
+## 常用快捷键
+
+| 快捷键 | 操作 |
+|--------|------|
+| `⌘T` | 新增 Provider |
+| `⌘E` | 编辑当前选中的 Provider |
+| `⌘↩` | 应用当前选中的 Provider 配置 |
+| `⌘,` | 打开设置 |
+| `⌘W` | 关闭窗口 |
+
+## 设置
+
+设置面板包含：
+
+- 外观：深色/浅色/跟随系统，内置多套主题色。
+- 编辑器：选择外部编辑器打开配置文件。
+- 数据管理：导入、导出 Provider 配置。
+- 开机自启：登录 macOS 后自动启动。
+- CLI：安装或移除 `ccmanager` 命令行工具。
+- 关于：查看版本并手动检查更新。
+
+## 为什么做 CCManager
+
+很多切换工具会接管整份配置文件，容易覆盖手动维护的字段。CCManager 的原则更保守：
+
+> 只改 Provider 切换需要的字段，其它配置留给用户自己控制。
+
+如果需要修改高级配置，直接用外部编辑器打开原始配置文件即可。
+
+## 致谢
+
+CCManager 的灵感来自 [cc-switch](https://github.com/farion1231/cc-switch)。这是一个功能完整的跨平台 AI CLI 管理工具，覆盖 Provider、MCP、Skills、Prompts 等多个方向。
+
+本项目在设计思路和部分实现上参考、借鉴了 cc-switch，并在此基础上做了更聚焦的取舍：保留 Provider 切换和配置写入能力，做成一个轻量的 macOS 原生菜单栏工具。
+
+## 系统需求
+
+- macOS 13.0+
+
+## 本地构建
 
 ```bash
 xcodegen generate
 xcodebuild -project CCManager.xcodeproj -scheme CCManager -configuration Release build
 ```
 
-或使用 Xcode 打开 `CCManager.xcodeproj` 直接运行。
-
-## 📖 使用
-
-1. �菜单栏启动后在看到 CCManager 图标
-2. 👆 点击图标查看 Provider 列表
-3. ✅ 选择 Provider 即切换为当前激活配置
-4. ✏️ 右键或点击编辑按钮管理 Provider
+也可以用 Xcode 打开 `CCManager.xcodeproj` 后直接运行。

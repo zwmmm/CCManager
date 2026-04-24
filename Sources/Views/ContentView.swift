@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var selectedProviderId: UUID?
     @State private var editingProvider: Provider?
+    @State private var showShortcutToast = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -57,6 +58,15 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
             showingSettings = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: .newProvider)) { _ in
+            showingAddSheet = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .editSelectedProvider)) { _ in
+            editSelectedProvider()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .applySelectedProvider)) { _ in
+            applySelectedProvider()
+        }
         .sheet(isPresented: $showingAddSheet) {
             ProviderFormView(mode: .add) { provider in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -75,6 +85,25 @@ struct ContentView: View {
                 }
             }
         }
+        .toast(isPresented: $showShortcutToast, message: "Config Applied")
+    }
+
+    private func selectedProvider() -> Provider? {
+        providerStore.providers.first { $0.id == selectedProviderId }
+    }
+
+    private func editSelectedProvider() {
+        guard let provider = selectedProvider() else { return }
+        editingProvider = provider
+    }
+
+    private func applySelectedProvider() {
+        guard let provider = selectedProvider() else { return }
+        try? ConfigWriter.shared.writeProviderToConfig(provider)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            providerStore.setActiveProvider(provider)
+        }
+        showShortcutToast = true
     }
 }
 
@@ -183,10 +212,12 @@ struct SidebarView: View {
                     sidebarIconButton(systemName: "plus") {
                         showingAddSheet = true
                     }
+                    .help("New Provider (⌘T)")
 
                     sidebarIconButton(systemName: "gearshape") {
                         showingSettings.wrappedValue = true
                     }
+                    .help("Settings (⌘,)")
 
                     Menu {
                         Button("Claude Code") {
@@ -199,6 +230,7 @@ struct SidebarView: View {
                         sidebarToolbarIcon(systemName: "square.and.pencil")
                     }
                     .buttonStyle(ScaleButtonStyle())
+                    .help("Open config file")
                 }
             }
             .padding(.horizontal, 14)
