@@ -122,7 +122,7 @@ final class ConfigWriter {
         try authData.write(to: authUrl, options: .atomic)
 
         // Write config.toml (only model field, no model_provider)
-        let model = provider.model ?? "gpt-4o"
+        let model = provider.model ?? PresetProvider.defaultCodexModel
         let configContent = """
         model = "\(model)"
 

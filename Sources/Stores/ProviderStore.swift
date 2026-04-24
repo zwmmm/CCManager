@@ -65,56 +65,99 @@ final class ProviderStore: ObservableObject {
         providers.filter { $0.type == type }.sorted { $0.sortOrder < $1.sortOrder }
     }
 
-    func moveProvider(from source: IndexSet, to destination: Int, inGroup groupType: ProviderType? = nil) {
-        if let groupType = groupType {
-            // 分组模式：只移动同 groupType 的 provider
-            var groupProviders = providers(ofType: groupType)
-            groupProviders.move(fromOffsets: source, toOffset: destination)
+    static func providers(
+        _ providers: [Provider],
+        moving sourceId: UUID,
+        to targetId: UUID,
+        inGroup groupType: ProviderType?
+    ) -> [Provider] {
+        guard sourceId != targetId else { return providers }
 
-            // Update sortOrder for moved providers (O(n) - using direct index lookup)
-            let movedIds = Set(source.map { groupProviders[$0] }.map { $0.id })
-            for (index, provider) in groupProviders.enumerated() {
-                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
-                    providers[idx].sortOrder = index
-                }
-            }
-
-            // Write only affected providers to DB
-            for provider in groupProviders where movedIds.contains(provider.id) {
-                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
-                    do {
-                        try database.updateProvider(providers[idx])
-                    } catch {
-                        print("Move provider error: \(error)")
-                    }
-                }
-            }
+        let scopedProviders: [Provider]
+        if let groupType {
+            scopedProviders = providers
+                .filter { provider in provider.belongsToReorderGroup(groupType) }
+                .sorted { $0.sortOrder < $1.sortOrder }
         } else {
-            // 扁平模式：全量移动
-            var reorderedProviders = providers
-            reorderedProviders.move(fromOffsets: source, toOffset: destination)
-
-            // Update sortOrder for all (O(n) - reorderedProviders order matches providers index)
-            let movedIds = Set(source.map { reorderedProviders[$0] }.map { $0.id })
-            for (index, provider) in reorderedProviders.enumerated() {
-                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
-                    providers[idx].sortOrder = index
-                }
-            }
-
-            // Write only affected providers to DB
-            for provider in reorderedProviders where movedIds.contains(provider.id) {
-                if let idx = providers.firstIndex(where: { $0.id == provider.id }) {
-                    do {
-                        try database.updateProvider(providers[idx])
-                    } catch {
-                        print("Move provider error: \(error)")
-                    }
-                }
-            }
+            scopedProviders = providers
         }
 
-        objectWillChange.send()
+        guard
+            let sourceIndex = scopedProviders.firstIndex(where: { $0.id == sourceId }),
+            let targetIndex = scopedProviders.firstIndex(where: { $0.id == targetId })
+        else {
+            return providers
+        }
+
+        var reorderedScopedProviders = scopedProviders
+        reorderedScopedProviders.move(
+            fromOffsets: IndexSet(integer: sourceIndex),
+            toOffset: targetIndex > sourceIndex ? targetIndex + 1 : targetIndex
+        )
+
+        for index in reorderedScopedProviders.indices {
+            reorderedScopedProviders[index].sortOrder = index
+        }
+
+        guard let groupType else {
+            return reorderedScopedProviders
+        }
+
+        var output = providers
+        var scopedIterator = reorderedScopedProviders.makeIterator()
+        for index in output.indices where output[index].belongsToReorderGroup(groupType) {
+            if let provider = scopedIterator.next() {
+                output[index] = provider
+            }
+        }
+        return output
+    }
+
+    static func providersWithChangedSortOrder(from oldProviders: [Provider], to newProviders: [Provider]) -> [Provider] {
+        newProviders.filter { provider in
+            oldProviders.first(where: { $0.id == provider.id })?.sortOrder != provider.sortOrder
+        }
+    }
+
+    func moveProvider(from source: IndexSet, to destination: Int, inGroup groupType: ProviderType? = nil) {
+        let scopedProviders = groupType.map { group in
+            providers.filter { $0.belongsToReorderGroup(group) }.sorted { $0.sortOrder < $1.sortOrder }
+        } ?? providers
+        guard
+            let sourceIndex = source.first,
+            scopedProviders.indices.contains(sourceIndex)
+        else { return }
+
+        let boundedDestination = max(0, min(destination, scopedProviders.count - 1))
+        let targetProvider = scopedProviders[boundedDestination]
+        moveProvider(moving: scopedProviders[sourceIndex].id, to: targetProvider.id, inGroup: groupType)
+    }
+
+    func moveProvider(moving sourceId: UUID, to targetId: UUID, inGroup groupType: ProviderType? = nil) {
+        let oldProviders = providers
+        let reorderedProviders = Self.providers(providers, moving: sourceId, to: targetId, inGroup: groupType)
+        guard reorderedProviders != oldProviders else { return }
+
+        providers = reorderedProviders
+        persistProviderSortOrderChanges(from: oldProviders)
+    }
+
+    func previewMoveProvider(moving sourceId: UUID, to targetId: UUID, inGroup groupType: ProviderType? = nil) {
+        let reorderedProviders = Self.providers(providers, moving: sourceId, to: targetId, inGroup: groupType)
+        guard reorderedProviders != providers else { return }
+
+        providers = reorderedProviders
+    }
+
+    func persistProviderSortOrderChanges(from oldProviders: [Provider]) {
+        let changedProviders = Self.providersWithChangedSortOrder(from: oldProviders, to: providers)
+        guard !changedProviders.isEmpty else { return }
+
+        database.updateProviderSortOrders(changedProviders) { result in
+            if case let .failure(error) = result {
+                print("Move provider error: \(error)")
+            }
+        }
     }
 
     func reassignSortOrderOnGroupingEnabled() {
@@ -186,5 +229,16 @@ final class ProviderStore: ObservableObject {
 
     func testProvider(_ provider: Provider) async -> TestResult {
         return await ProviderTester.shared.test(provider: provider)
+    }
+}
+
+private extension Provider {
+    func belongsToReorderGroup(_ groupType: ProviderType) -> Bool {
+        switch groupType {
+        case .claudeCode:
+            return type == .claudeCode
+        case .codex, .codexOAuth:
+            return type == .codex || type == .codexOAuth
+        }
     }
 }

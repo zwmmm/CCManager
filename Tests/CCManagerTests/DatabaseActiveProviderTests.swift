@@ -85,6 +85,37 @@ final class DatabaseActiveProviderTests: XCTestCase {
         XCTAssertEqual(persisted.oauthDisplayName, "user@example.com")
     }
 
+    func testUpdatesOnlyProviderSortOrdersAsynchronously() throws {
+        let database = try Database(databaseURL: tempDirectory.appendingPathComponent("providers.sqlite"))
+        var alpha = Provider(name: "Alpha", type: .claudeCode, apiKey: "alpha-key", baseUrl: "https://alpha.example.com", sortOrder: 0)
+        var beta = Provider(name: "Beta", type: .claudeCode, apiKey: "beta-key", baseUrl: "https://beta.example.com", sortOrder: 1)
+
+        try database.addProvider(alpha)
+        try database.addProvider(beta)
+
+        alpha.sortOrder = 1
+        beta.sortOrder = 0
+
+        let updated = expectation(description: "sort orders updated")
+        database.updateProviderSortOrders([alpha, beta]) { result in
+            do {
+                try result.get()
+            } catch {
+                XCTFail("Expected sort order update to succeed, got \(error)")
+            }
+            updated.fulfill()
+        }
+        wait(for: [updated], timeout: 2)
+
+        let providers = database.loadAllProviders()
+        let persistedAlpha = try XCTUnwrap(providers.first { $0.id == alpha.id })
+        let persistedBeta = try XCTUnwrap(providers.first { $0.id == beta.id })
+        XCTAssertEqual(persistedAlpha.sortOrder, 1)
+        XCTAssertEqual(persistedAlpha.baseUrl, "https://alpha.example.com")
+        XCTAssertEqual(persistedBeta.sortOrder, 0)
+        XCTAssertEqual(persistedBeta.apiKey, "beta-key")
+    }
+
     func testPersistsCodexOAuthProviderWithLegacyNonNullApiKeySchema() throws {
         let databaseURL = tempDirectory.appendingPathComponent("legacy-providers.sqlite")
         let connection = try Connection(databaseURL.path)
