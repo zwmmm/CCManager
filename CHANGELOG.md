@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.6] - 2026-04-25
+
+### Others
+
+- Refresh the README with clearer install-first structure, project badges, keyboard shortcuts, and cc-switch credits
+
 ## [1.12.5] - 2026-04-24
 
 ### Bug Fixes
