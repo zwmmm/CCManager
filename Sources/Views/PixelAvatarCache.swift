@@ -16,15 +16,19 @@ final class DiceBearAvatarCache {
         cache.countLimit = 100
     }
 
+    func cachedAvatar(for name: String, type: ProviderType, size: CGFloat) -> NSImage? {
+        cache.object(forKey: cacheKey(for: name, type: type, size: size))
+    }
+
     func avatar(for name: String, type: ProviderType, size: CGFloat) async -> NSImage {
-        let normalizedType = normalizedAvatarType(for: type)
-        let key = "\(name)-\(normalizedType.rawValue)-\(Int(size))" as NSString
+        let key = cacheKey(for: name, type: type, size: size)
 
         if let cached = cache.object(forKey: key) {
             return cached
         }
 
         // DiceBear: Claude Code → adventurer, Codex/Codex OAuth → open-peeps
+        let normalizedType = normalizedAvatarType(for: type)
         let style = normalizedType == .codex ? "open-peeps" : "adventurer"
         var components = URLComponents()
         components.scheme = "https"
@@ -86,6 +90,11 @@ final class DiceBearAvatarCache {
             return type
         }
     }
+
+    private func cacheKey(for name: String, type: ProviderType, size: CGFloat) -> NSString {
+        let normalizedType = normalizedAvatarType(for: type)
+        return "\(name)-\(normalizedType.rawValue)-\(Int(size))" as NSString
+    }
 }
 
 // MARK: - Cached DiceBear Avatar View
@@ -97,6 +106,16 @@ struct CachedPixelAvatarView: View {
 
     @State private var renderedImage: NSImage?
     @State private var isLoading = true
+
+    init(name: String, type: ProviderType, size: CGFloat) {
+        self.name = name
+        self.type = type
+        self.size = size
+
+        let cachedImage = DiceBearAvatarCache.shared.cachedAvatar(for: name, type: type, size: size)
+        _renderedImage = State(initialValue: cachedImage)
+        _isLoading = State(initialValue: cachedImage == nil)
+    }
 
     var body: some View {
         Group {
@@ -123,6 +142,12 @@ struct CachedPixelAvatarView: View {
     }
 
     private func loadAvatar() async {
+        if let cachedImage = DiceBearAvatarCache.shared.cachedAvatar(for: name, type: type, size: size) {
+            renderedImage = cachedImage
+            isLoading = false
+            return
+        }
+
         isLoading = true
         defer { isLoading = false }
         renderedImage = await DiceBearAvatarCache.shared.avatar(

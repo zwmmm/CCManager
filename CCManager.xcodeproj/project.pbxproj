@@ -48,6 +48,7 @@
 		C3325CBB7F766C604B8A475D /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7596402EB70948CBE259945 /* ConfigWriter.swift */; };
 		C8D3F8A36107532E88592DD5 /* UpdateFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */; };
 		CCD1BC5FAA3549B8DFF6270A /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF86181ED6E3787D0D6C85AD /* StatusBarController.swift */; };
+		D1E74211D3E56539512A6495 /* ProviderReorderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1738F440ECDB149420D72488 /* ProviderReorderTests.swift */; };
 		D3383F66529ADD615FF1786B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA0D519C657FBE143B7067CE /* Assets.xcassets */; };
 		D78DF66E643AA833FE6F2E89 /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8130E2B4C43CCB2C689D79 /* Provider.swift */; };
 		E0DDB91DDEFBAC77D66AAACA /* ProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F35BF8EA640544D49399E6 /* ProviderStore.swift */; };
@@ -76,6 +77,7 @@
 		0B74F0AFB767C46186CA2D10 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
 		129EC2323C4B2F104B519350 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		1337C4E3B6B34325B2491F3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		1738F440ECDB149420D72488 /* ProviderReorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderReorderTests.swift; sourceTree = "<group>"; };
 		195B74FFBE78632A2AAA0B49 /* PixelAvatarCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarCache.swift; sourceTree = "<group>"; };
 		1F75A5A7F863AAF70A512FD6 /* CodexOAuthLoginParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexOAuthLoginParser.swift; sourceTree = "<group>"; };
 		22B72C8F4B5E5338271467A5 /* UpdateFeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFeed.swift; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				6F956342A0337C0ABE7B9369 /* ConfigWriterTests.swift */,
 				CF020741E72A7E78E2FDCD5B /* DatabaseActiveProviderTests.swift */,
 				C1ACBBB7E73CCAEBFB9F9460 /* OAuthLoginManagerTests.swift */,
+				1738F440ECDB149420D72488 /* ProviderReorderTests.swift */,
 				69E7315B65D89C029AD5DF56 /* ProviderTesterTests.swift */,
 				325040860F9187C754EE79FC /* UpdateFeedTests.swift */,
 			);
@@ -459,6 +462,7 @@
 				20D1B835DB9EC0EF500C8492 /* ConfigWriterTests.swift in Sources */,
 				E6A59989771EBF09A188F986 /* DatabaseActiveProviderTests.swift in Sources */,
 				FDDBC6E25BEFFEB25E1436BE /* OAuthLoginManagerTests.swift in Sources */,
+				D1E74211D3E56539512A6495 /* ProviderReorderTests.swift in Sources */,
 				0D9D85620F004E2FCBD35C50 /* ProviderTesterTests.swift in Sources */,
 				AD8EE5CB43ACAECE2E16D967 /* UpdateFeedTests.swift in Sources */,
 			);

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var providerStore: ProviderStore
@@ -93,6 +94,9 @@ struct SidebarView: View {
     let showingSettings: Binding<Bool>
     @Binding var editingProvider: Provider?
     @State private var hoveredProviderId: UUID?
+    @State private var draggingProviderId: UUID?
+    @State private var draggingGroupType: ProviderType?
+    @State private var reorderBaselineProviders: [Provider] = []
 
     private var claudeCodeProviders: [Provider] {
         providerStore.providers.filter { $0.type == .claudeCode }.sorted { $0.sortOrder < $1.sortOrder }
@@ -265,6 +269,8 @@ struct SidebarView: View {
     private func rowView(for provider: Provider) -> some View {
         let isSelected = selectedProviderId == provider.id
         let isHovered = hoveredProviderId == provider.id
+        let isDragging = draggingProviderId == provider.id
+        let reorderGroupType = groupingEnabled ? provider.reorderGroupType : nil
 
         HStack(spacing: 10) {
             ZStack {
@@ -320,13 +326,14 @@ struct SidebarView: View {
             }
         )
         .shadow(
-            color: isSelected ? themeManager.brandColor.opacity(0.16) : (isHovered ? AppTheme.shadow : Color.clear),
-            radius: isSelected ? 14 : (isHovered ? 8 : 0),
+            color: isDragging ? Color.clear : (isSelected ? themeManager.brandColor.opacity(0.16) : (isHovered ? AppTheme.shadow : Color.clear)),
+            radius: isDragging ? 0 : (isSelected ? 14 : (isHovered ? 8 : 0)),
             x: 0,
-            y: isSelected ? 6 : 4
+            y: isDragging ? 0 : (isSelected ? 6 : 4)
         )
+        .opacity(isDragging ? 0 : 1)
         .contentShape(Rectangle())
-        .offset(y: isHovered && !isSelected ? -1 : 0)
+        .offset(y: isHovered && !isSelected && draggingProviderId == nil ? -1 : 0)
         .animation(.easeOut(duration: 0.16), value: isHovered)
         .onHover { hovering in
             hoveredProviderId = hovering ? provider.id : nil
@@ -336,6 +343,25 @@ struct SidebarView: View {
                 selectedProviderId = provider.id
             }
         }
+        .onDrag {
+            draggingProviderId = provider.id
+            draggingGroupType = reorderGroupType
+            reorderBaselineProviders = providerStore.providers
+            return NSItemProvider(object: provider.id.uuidString as NSString)
+        } preview: {
+            providerDragPreview(for: provider)
+        }
+        .onDrop(
+            of: [UTType.text],
+            delegate: ProviderReorderDropDelegate(
+                targetProvider: provider,
+                providerStore: providerStore,
+                draggedProviderId: $draggingProviderId,
+                draggedGroupType: $draggingGroupType,
+                reorderBaselineProviders: $reorderBaselineProviders,
+                targetGroupType: reorderGroupType
+            )
+        )
         .contextMenu {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -365,6 +391,48 @@ struct SidebarView: View {
     }
 
     @ViewBuilder
+    private func providerDragPreview(for provider: Provider) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.subtleFill)
+                    .frame(width: 34, height: 34)
+                CachedPixelAvatarView(name: provider.name, type: provider.type, size: 24)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(provider.name)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                    .lineLimit(1)
+
+                Text(provider.type.rawValue)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            if provider.isActive {
+                ProviderActiveIndicator(accent: themeManager.brandColor)
+            }
+        }
+        .frame(width: 208, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppTheme.surfaceElevated.opacity(0.96))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(themeManager.brandColor.opacity(0.35), lineWidth: 1)
+        }
+        .shadow(color: AppTheme.shadow.opacity(0.8), radius: 18, x: 0, y: 10)
+    }
+
+    @ViewBuilder
     private func sidebarIconButton(systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             sidebarToolbarIcon(systemName: systemName)
@@ -387,6 +455,56 @@ struct SidebarView: View {
                     .stroke(AppTheme.cardStroke, lineWidth: 1)
             }
             .shadow(color: AppTheme.shadow, radius: 6, x: 0, y: 4)
+    }
+}
+
+private struct ProviderReorderDropDelegate: DropDelegate {
+    let targetProvider: Provider
+    let providerStore: ProviderStore
+    @Binding var draggedProviderId: UUID?
+    @Binding var draggedGroupType: ProviderType?
+    @Binding var reorderBaselineProviders: [Provider]
+    let targetGroupType: ProviderType?
+
+    func dropEntered(info: DropInfo) {
+        guard
+            let draggedProviderId,
+            draggedProviderId != targetProvider.id,
+            draggedGroupType == targetGroupType
+        else { return }
+
+        withAnimation(.interactiveSpring(response: 0.22, dampingFraction: 0.9, blendDuration: 0.08)) {
+            providerStore.previewMoveProvider(
+                moving: draggedProviderId,
+                to: targetProvider.id,
+                inGroup: targetGroupType
+            )
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let baselineProviders = reorderBaselineProviders
+        draggedProviderId = nil
+        draggedGroupType = nil
+        reorderBaselineProviders = []
+
+        providerStore.persistProviderSortOrderChanges(from: baselineProviders)
+        return true
+    }
+}
+
+private extension Provider {
+    var reorderGroupType: ProviderType {
+        switch type {
+        case .claudeCode:
+            return .claudeCode
+        case .codex, .codexOAuth:
+            return .codex
+        }
     }
 }
 

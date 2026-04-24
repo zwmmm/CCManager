@@ -214,6 +214,30 @@ final class Database {
         ))
     }
 
+    func updateProviderSortOrders(
+        _ providers: [Provider],
+        completion: ((Swift.Result<Void, Error>) -> Void)? = nil
+    ) {
+        dbQueue.async { [weak self] in
+            guard let self, let db = self.db else {
+                completion?(.failure(DatabaseError.notConnected))
+                return
+            }
+
+            do {
+                try db.transaction {
+                    for provider in providers {
+                        let row = self.providersTable.filter(self.idColumn == provider.id.uuidString)
+                        try db.run(row.update(self.sortOrderColumn <- provider.sortOrder))
+                    }
+                }
+                completion?(.success(()))
+            } catch {
+                completion?(.failure(error))
+            }
+        }
+    }
+
     func deleteProvider(id: UUID) throws {
         guard let db = db else { throw DatabaseError.notConnected }
 
