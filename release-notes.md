@@ -1,7 +1,8 @@
 ### Bug Fixes
 
-- Improve provider drag-and-drop reordering responsiveness by keeping drop-time UI updates lightweight and persisting sort order asynchronously
+- Update the default Codex GPT model to gpt-5.5 across API-key and ChatGPT OAuth providers
+- Improve the Codex OAuth account form actions so refresh and logout controls stay compact in narrow layouts
 
 ### Others
 
-- Improve CLI output formatting for agent-friendly usage
+- Display the Codex model configuration label as uppercase `MODEL`
