@@ -661,7 +661,7 @@ struct ProviderDetailView: View {
                             ConfigRowView(label: "ACCOUNT", value: provider.oauthDisplayName?.isEmpty == false ? provider.oauthDisplayName! : "ChatGPT Account")
                             premiumDivider()
                         } else {
-                            ConfigRowView(label: labels.apiKey, value: maskAPIKey(provider.apiKey ?? ""))
+                            ConfigRowView(label: labels.apiKey, value: maskAPIKey(provider.apiKey ?? ""), rawValueForCopy: provider.apiKey)
                             premiumDivider()
                         }
 
@@ -852,6 +852,7 @@ private struct ProviderActiveIndicator: View {
 private struct ConfigRowView: View {
     let label: String
     let value: String
+    var rawValueForCopy: String?
 
     @State private var isHovering = false
 
@@ -871,8 +872,9 @@ private struct ConfigRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {
+                let valueToCopy = rawValueForCopy ?? value
                 NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(value, forType: .string)
+                NSPasteboard.general.setString(valueToCopy, forType: .string)
             } label: {
                 Image(systemName: "doc.on.doc")
                     .font(.system(size: 11, weight: .semibold))
