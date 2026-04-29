@@ -1,3 +1,3 @@
-### Others
+### Bug Fixes
 
-- Refresh the README with clearer install-first structure, project badges, keyboard shortcuts, and cc-switch credits
+- Fix ConfigRowView copying masked value instead of actual API key content

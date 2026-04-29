@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.7] - 2026-04-29
+
+### Bug Fixes
+
+- Fix ConfigRowView copying masked value instead of actual API key content
+
 ## [1.12.6] - 2026-04-25
 
 ### Others
