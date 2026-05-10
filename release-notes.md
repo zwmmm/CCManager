@@ -1,3 +1,3 @@
-### Bug Fixes
+### Others
 
-- Fix ConfigRowView copying masked value instead of actual API key content
+- Hide Top Sessions section in Usage Statistics view temporarily

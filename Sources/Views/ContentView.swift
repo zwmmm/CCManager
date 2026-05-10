@@ -198,10 +198,12 @@ struct SidebarView: View {
             .padding(.bottom, 10)
 
             ScrollView {
-                if groupingEnabled {
-                    groupedContentView()
-                } else {
-                    flatContentView()
+                VStack(spacing: 10) {
+                    if groupingEnabled {
+                        groupedContentView()
+                    } else {
+                        flatContentView()
+                    }
                 }
             }
 
@@ -212,6 +214,11 @@ struct SidebarView: View {
 
                 HStack(spacing: 8) {
                     Spacer()
+
+                    sidebarIconButton(systemName: "chart.xyaxis.line") {
+                        UsageStatsWindowController.shared.show()
+                    }
+                    .help("Usage statistics")
 
                     sidebarIconButton(systemName: "plus") {
                         showingAddSheet = true
@@ -896,7 +903,7 @@ private struct ConfigRowView: View {
     }
 }
 
-private struct PrimaryDashboardButtonStyle: ButtonStyle {
+struct PrimaryDashboardButtonStyle: ButtonStyle {
     let accent: Color
 
     func makeBody(configuration: Configuration) -> some View {
@@ -927,7 +934,7 @@ private struct PrimaryDashboardButtonStyle: ButtonStyle {
     }
 }
 
-private struct SecondaryDashboardButtonStyle: ButtonStyle {
+struct SecondaryDashboardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(AppTheme.textPrimary)

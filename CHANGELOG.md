@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.8] - 2026-05-11
+
+### Others
+
+- Hide Top Sessions section in Usage Statistics view temporarily
+
 ## [1.12.7] - 2026-04-29
 
 ### Bug Fixes

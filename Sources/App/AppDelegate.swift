@@ -34,6 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(EditorManager.shared)
             .environmentObject(UpdateManager.shared)
             .environmentObject(CLIInstallationManager.shared)
+            .environmentObject(UsageStatsManager.shared)
 
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 500),
@@ -52,6 +53,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         UpdateManager.shared.startAutomaticUpdateChecks()
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            UsageStatsManager.shared.refreshIfNeeded()
+        }
     }
 
     @objc private func openSettings() {
