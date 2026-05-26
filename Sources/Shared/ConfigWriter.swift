@@ -5,6 +5,7 @@ final class ConfigWriter {
 
     private let fileManager: FileManager
     private let home: URL
+    private let currentDate: () -> Date
 
     // MARK: - Claude Code paths
     private var claudeDir: URL { home.appendingPathComponent(".claude") }
@@ -17,11 +18,13 @@ final class ConfigWriter {
     private init() {
         self.fileManager = .default
         self.home = URL(fileURLWithPath: NSHomeDirectory())
+        self.currentDate = Date.init
     }
 
-    init(fileManager: FileManager = .default, home: URL) {
+    init(fileManager: FileManager = .default, home: URL, currentDate: @escaping () -> Date = Date.init) {
         self.fileManager = fileManager
         self.home = home
+        self.currentDate = currentDate
     }
 
     // MARK: - Public dispatch
@@ -85,23 +88,36 @@ final class ConfigWriter {
         try config.write(to: codexConfig, atomically: true, encoding: .utf8)
     }
 
-    // MARK: - Codex OAuth → ~/.codex/config.toml
+    // MARK: - Codex OAuth → ~/.codex/auth.json + config.toml
 
     private func writeCodexOAuthConfig(_ provider: Provider) throws {
         try fileManager.createDirectory(at: codexDir, withIntermediateDirectories: true)
 
+        // Write auth.json
+        let authUrl = codexDir.appendingPathComponent("auth.json")
+        var auth: [String: Any] = (try? Data(contentsOf: authUrl))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+
+        auth["auth_mode"] = "chatgpt"
+        auth["OPENAI_API_KEY"] = NSNull()
+
+        let tokens: [String: Any] = [
+            "id_token": provider.oauthIdToken ?? "",
+            "access_token": provider.oauthAccessToken ?? "",
+            "refresh_token": provider.oauthRefreshToken ?? "",
+            "account_id": provider.oauthAccountId ?? ""
+        ]
+        auth["tokens"] = tokens
+        auth["last_refresh"] = ISO8601DateFormatter().string(from: currentDate())
+
+        let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
+        try authData.write(to: authUrl, options: .atomic)
+
+        // Write config.toml (only model field, no model_provider)
         let model = provider.model ?? PresetProvider.defaultCodexModel
-        let providerKey = "ccmanager"  // fixed provider key
         let configContent = """
-        model_provider = "\(providerKey)"
         model = "\(model)"
 
-        [model_providers.\(providerKey)]
-        name = "\(providerKey)"
-        base_url = "\(provider.baseUrl)"
-        wire_api = "responses"
-        requires_openai_auth = true
-        experimental_bearer_token = "\(provider.oauthAccessToken ?? "")"
         """
         try configContent.write(to: codexConfig, atomically: true, encoding: .utf8)
     }
