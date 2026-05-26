@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.12.9] - 2026-05-26
+
+### Bug Fixes
+
+- Update Codex provider configuration to store bearer tokens directly in `config.toml` without rewriting `auth.json`
+
+### Others
+
+- Simplify Usage Statistics by removing session parsing, grouping, launch actions, and automatic startup refresh
+
 ## [1.12.8] - 2026-05-11
 
 ### Others
