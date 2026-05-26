@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.10] - 2026-05-26
+
+### Bug Fixes
+
+- Restore Codex OAuth ChatGPT token writing to `auth.json` while keeping `config.toml` limited to the selected model
+
 ## [1.12.9] - 2026-05-26
 
 ### Bug Fixes
