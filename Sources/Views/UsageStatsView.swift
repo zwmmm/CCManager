@@ -6,8 +6,8 @@ struct UsageStatsView: View {
     @EnvironmentObject var usageManager: UsageStatsManager
 
     @State private var summaryAggregation: UsageAggregation = .day
-    @State private var sessionAggregation: UsageSessionAggregation = .all
     @State private var isAppearing = false
+    @State private var refreshRotation = 0.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -32,7 +32,7 @@ struct UsageStatsView: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.84).delay(0.04)) {
                 isAppearing = true
             }
-            usageManager.refreshIfNeeded()
+            usageManager.refresh()
         }
     }
 
@@ -59,18 +59,38 @@ struct UsageStatsView: View {
             Button {
                 usageManager.refresh()
             } label: {
-                Label(usageManager.isRefreshing ? "Refreshing" : "Refresh", systemImage: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .semibold))
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                        .rotationEffect(.degrees(refreshRotation))
+                    Text(usageManager.isRefreshing ? "Refreshing" : "Refresh")
+                }
+                .font(.system(size: 12, weight: .semibold))
             }
             .buttonStyle(SecondaryDashboardButtonStyle())
             .disabled(usageManager.isRefreshing)
+            .onAppear {
+                updateRefreshRotation(usageManager.isRefreshing)
+            }
+            .onChange(of: usageManager.isRefreshing) { isRefreshing in
+                updateRefreshRotation(isRefreshing)
+            }
+        }
+    }
+
+    private func updateRefreshRotation(_ isRefreshing: Bool) {
+        if isRefreshing {
+            refreshRotation = 0
+            withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
+                refreshRotation = 360
+            }
+        } else {
+            refreshRotation = 0
         }
     }
 
     private func reportView(_ report: UsageReport) -> some View {
         let buckets = UsageStatsAggregator.aggregate(report.entries, by: summaryAggregation)
         let visibleBuckets = Array(buckets.reversed())
-        let sessionBuckets = UsageStatsAggregator.sessionBuckets(report.sessions, by: sessionAggregation)
 
         return VStack(alignment: .leading, spacing: 14) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
@@ -107,47 +127,7 @@ struct UsageStatsView: View {
                 }
             }
             .usagePanel()
-            .frame(maxHeight: sessionBuckets.isEmpty ? .infinity : 220)
-
-            if false && !sessionBuckets.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    sectionHeader("Top Sessions", trailing: sessionAggregationPicker)
-
-                    VStack(spacing: 0) {
-                        ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 0) {
-                                ForEach(sessionBuckets) { bucket in
-                                    UsageSessionBucketHeader(label: bucket.label)
-                                    ForEach(bucket.sessions) { session in
-                                        UsageSessionRow(session: session, accent: themeManager.brandColor) {
-                                            usageManager.openSession(session)
-                                        }
-                                        if session.id != bucket.sessions.last?.id {
-                                            Rectangle()
-                                                .fill(AppTheme.separator)
-                                                .frame(height: 1)
-                                                .padding(.horizontal, 12)
-                                        }
-                                    }
-                                    if bucket.id != sessionBuckets.last?.id {
-                                        Rectangle()
-                                            .fill(AppTheme.cardStroke)
-                                            .frame(height: 1)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .background(AppTheme.cardFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(AppTheme.cardStroke, lineWidth: 1)
-                    }
-                }
-                .usagePanel()
-                .frame(maxHeight: .infinity)
-            }
+            .frame(maxHeight: .infinity)
         }
         .frame(maxHeight: .infinity, alignment: .topLeading)
     }
@@ -168,29 +148,6 @@ struct UsageStatsView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 7, style: .continuous)
                                 .fill(summaryAggregation == item ? themeManager.brandColor : AppTheme.subtleFill)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var sessionAggregationPicker: some View {
-        HStack(spacing: 4) {
-            ForEach(UsageSessionAggregation.allCases, id: \.self) { item in
-                Button {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
-                        sessionAggregation = item
-                    }
-                } label: {
-                    Text(item.rawValue)
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(sessionAggregation == item ? .white : AppTheme.textSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                .fill(sessionAggregation == item ? themeManager.brandColor : AppTheme.subtleFill)
                         )
                 }
                 .buttonStyle(.plain)
@@ -376,85 +333,6 @@ private struct UsageBucketRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-    }
-}
-
-private struct UsageSessionBucketHeader: View {
-    let label: String
-
-    var body: some View {
-        Text(label)
-            .font(.system(size: 10, weight: .bold, design: .monospaced))
-            .foregroundStyle(AppTheme.textTertiary)
-            .padding(.horizontal, 12)
-            .padding(.top, 10)
-            .padding(.bottom, 4)
-    }
-}
-
-private struct UsageSessionRow: View {
-    let session: UsageSessionEntry
-    let accent: Color
-    let onOpen: () -> Void
-
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: onOpen) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 7) {
-                        Text(session.source.rawValue)
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundStyle(session.source == .codex ? .purple : accent)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .fill((session.source == .codex ? Color.purple : accent).opacity(0.10))
-                            )
-
-                        Text(session.lastActivity)
-                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(AppTheme.textTertiary)
-                    }
-
-                    Text(session.displayName)
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(AppTheme.textPrimary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-
-                    Text(session.models.prefix(2).joined(separator: " / "))
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundStyle(AppTheme.textTertiary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-
-                Spacer(minLength: 10)
-
-                UsageTokenChip(title: "Total", value: UsageValueFormatter.tokenCount(session.totalTokens), accent: accent)
-                UsageTokenChip(title: "Cache", value: UsageValueFormatter.tokenCount(session.cacheTokens), accent: .teal)
-
-                Image(systemName: "terminal")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(isHovering ? accent : AppTheme.textTertiary)
-                    .frame(width: 18)
-
-                Text(UsageValueFormatter.currencyUSD(session.costUSD))
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .frame(width: 74, alignment: .trailing)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(isHovering ? accent.opacity(0.06) : Color.clear)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovering = $0 }
-        .help("Open session in terminal")
     }
 }
 

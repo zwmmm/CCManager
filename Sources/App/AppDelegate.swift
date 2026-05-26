@@ -53,11 +53,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         UpdateManager.shared.startAutomaticUpdateChecks()
-
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            UsageStatsManager.shared.refreshIfNeeded()
-        }
     }
 
     @objc private func openSettings() {

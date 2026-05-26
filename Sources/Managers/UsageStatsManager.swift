@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 
 @MainActor
@@ -58,7 +57,6 @@ final class UsageStatsManager: ObservableObject {
                     lastUpdated = Date()
                 }
 
-                await refreshSessions(environment: environment, baseReport: report)
                 isRefreshing = false
             } catch {
                 isRefreshing = false
@@ -67,44 +65,10 @@ final class UsageStatsManager: ObservableObject {
         }
     }
 
-    private func refreshSessions(environment: [String: String], baseReport: UsageReport) async {
-        async let claudeSessionsResult = Self.loadSessions { try await Self.runCcusageSessionJSON(environment: environment) } parser: {
-            try UsageSessionParser.parseClaude($0)
-        }
-        async let codexSessionsResult = Self.loadSessions { try await Self.runCodexSessionJSON(environment: environment) } parser: {
-            try UsageSessionParser.parseCodex($0)
-        }
-
-        let sessionResults = await [claudeSessionsResult, codexSessionsResult]
-        let sessions = sessionResults.flatMap { (try? $0.get()) ?? [] }
-        guard !sessions.isEmpty else { return }
-
-        let updatedReport = baseReport.withSessions(sessions)
-        if case .loaded(let currentReport) = state, currentReport.entries == baseReport.entries {
-            state = updatedReport == currentReport ? state : .loaded(updatedReport)
-        }
-    }
-
-    func openSession(_ session: UsageSessionEntry) {
-        UsageSessionLauncher.open(session, environment: UsageCommandResolver.shellEnvironment())
-    }
-
     private static func loadReport(_ dataLoader: @escaping () async throws -> Data) async -> Result<UsageReport, Error> {
         do {
             let data = try await dataLoader()
             return .success(try UsageStatsParser.parse(data))
-        } catch {
-            return .failure(error)
-        }
-    }
-
-    private static func loadSessions(
-        _ dataLoader: @escaping () async throws -> Data,
-        parser: @escaping (Data) throws -> [UsageSessionEntry]
-    ) async -> Result<[UsageSessionEntry], Error> {
-        do {
-            let data = try await dataLoader()
-            return .success(try parser(data))
         } catch {
             return .failure(error)
         }
@@ -130,28 +94,6 @@ final class UsageStatsManager: ObservableObject {
         )
 
         return try jsonData(from: output, commandName: "@ccusage/codex")
-    }
-
-    private static func runCcusageSessionJSON(environment: [String: String]) async throws -> Data {
-        let output = try await runProcess(
-            executable: "/bin/zsh",
-            arguments: ["-ic", "npx --yes ccusage@latest session --json --offline --since \(defaultSinceDateString())"],
-            timeout: 45,
-            environment: environment
-        )
-
-        return try jsonData(from: output, commandName: "ccusage session")
-    }
-
-    private static func runCodexSessionJSON(environment: [String: String]) async throws -> Data {
-        let output = try await runProcess(
-            executable: "/bin/zsh",
-            arguments: ["-ic", "npx --yes @ccusage/codex@latest session --json --offline --since \(defaultSinceDateString())"],
-            timeout: 45,
-            environment: environment
-        )
-
-        return try jsonData(from: output, commandName: "@ccusage/codex session")
     }
 
     private static func jsonData(from output: ProcessOutput, commandName: String) throws -> Data {
@@ -283,42 +225,6 @@ enum UsageCommandResolver {
 
         return components.joined(separator: ":")
     }
-}
-
-enum UsageSessionLauncher {
-    static func open(_ session: UsageSessionEntry, environment: [String: String]) {
-        let command = resumeCommand(for: session)
-        let script = """
-        #!/bin/zsh
-        export PATH="\(environment["PATH"] ?? "")"
-        \(command)
-        """
-        let fileName = "ccmanager-usage-session-\(UUID().uuidString).command"
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-
-        do {
-            try script.write(to: url, atomically: true, encoding: .utf8)
-            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
-            NSWorkspace.shared.open(url)
-        } catch {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(command, forType: .string)
-        }
-    }
-
-    static func resumeCommand(for session: UsageSessionEntry) -> String {
-        switch session.source {
-        case .claude:
-            return "claude --resume \(shellQuoted(session.sessionId))"
-        case .codex:
-            return "codex resume --all \(shellQuoted(session.sessionId))"
-        }
-    }
-
-    private static func shellQuoted(_ value: String) -> String {
-        "'\(value.replacingOccurrences(of: "'", with: "'\\''"))'"
-    }
-
 }
 
 private struct ProcessOutput {

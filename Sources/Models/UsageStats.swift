@@ -24,25 +24,10 @@ struct UsageSummary: Equatable {
 struct UsageReport: Equatable {
     let entries: [UsageDailyEntry]
     let summary: UsageSummary
-    let sessions: [UsageSessionEntry]
 
-    init(entries: [UsageDailyEntry], summary: UsageSummary, sessions: [UsageSessionEntry] = []) {
+    init(entries: [UsageDailyEntry], summary: UsageSummary) {
         self.entries = entries
         self.summary = summary
-        self.sessions = sessions
-    }
-
-    func withSessions(_ sessions: [UsageSessionEntry]) -> UsageReport {
-        UsageReport(
-            entries: entries,
-            summary: summary,
-            sessions: sessions.sorted { lhs, rhs in
-                if lhs.totalTokens == rhs.totalTokens {
-                    return lhs.lastActivity > rhs.lastActivity
-                }
-                return lhs.totalTokens > rhs.totalTokens
-            }
-        )
     }
 
     static func merged(_ reports: [UsageReport]) -> UsageReport {
@@ -69,40 +54,7 @@ struct UsageReport: Equatable {
             )
         }
 
-        let sessions = reports
-            .flatMap(\.sessions)
-            .sorted { lhs, rhs in
-                if lhs.totalTokens == rhs.totalTokens {
-                    return lhs.lastActivity > rhs.lastActivity
-                }
-                return lhs.totalTokens > rhs.totalTokens
-            }
-
-        return UsageReport(entries: entries, summary: UsageStatsAggregator.summary(for: entries), sessions: sessions)
-    }
-}
-
-struct UsageSessionEntry: Identifiable, Equatable {
-    enum Source: String, Equatable {
-        case claude = "Claude"
-        case codex = "Codex"
-    }
-
-    var id: String { "\(source.rawValue)-\(sessionId)-\(projectPath)" }
-    let source: Source
-    let sessionId: String
-    let projectPath: String
-    let lastActivity: String
-    let inputTokens: Int
-    let outputTokens: Int
-    let cacheTokens: Int
-    let totalTokens: Int
-    let costUSD: Double
-    let models: [String]
-
-    var displayName: String {
-        let candidate = projectPath == "Unknown Project" || projectPath.isEmpty ? sessionId : projectPath
-        return UsageValueFormatter.readableSessionName(candidate)
+        return UsageReport(entries: entries, summary: UsageStatsAggregator.summary(for: entries))
     }
 }
 
@@ -117,20 +69,7 @@ struct UsageBucket: Identifiable, Equatable {
     let costUSD: Double
 }
 
-struct UsageSessionBucket: Identifiable, Equatable {
-    var id: String { label }
-    let label: String
-    let sessions: [UsageSessionEntry]
-}
-
 enum UsageAggregation: String, CaseIterable {
-    case day = "Daily"
-    case week = "Weekly"
-    case month = "Monthly"
-}
-
-enum UsageSessionAggregation: String, CaseIterable {
-    case all = "All"
     case day = "Daily"
     case week = "Weekly"
     case month = "Monthly"
@@ -172,21 +111,6 @@ enum UsageStatsParser {
     }
 }
 
-enum UsageSessionParser {
-    static func parseClaude(_ data: Data) throws -> [UsageSessionEntry] {
-        let decoder = JSONDecoder()
-        let response = try decoder.decode(ClaudeSessionResponse.self, from: data)
-        let sessions = response.sessions ?? response.data ?? []
-        return sessions.map(\.entry)
-    }
-
-    static func parseCodex(_ data: Data) throws -> [UsageSessionEntry] {
-        let decoder = JSONDecoder()
-        let response = try decoder.decode(CodexSessionResponse.self, from: data)
-        return response.sessions.map(\.entry)
-    }
-}
-
 enum UsageValueFormatter {
     static func tokenCount(_ value: Int) -> String {
         let units: [(threshold: Double, suffix: String)] = [
@@ -205,40 +129,6 @@ enum UsageValueFormatter {
 
     static func currencyUSD(_ value: Double) -> String {
         String(format: "$%.2f", value)
-    }
-
-    static func readableSessionName(_ value: String) -> String {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "Unknown Session" }
-
-        if trimmed.hasPrefix("-Users-") {
-            let components = trimmed
-                .split(separator: "-")
-                .map(String.init)
-                .filter { !$0.isEmpty }
-            if components.count > 2 {
-                return components.suffix(2).joined(separator: "/")
-            }
-        }
-
-        let slashNormalized = trimmed.replacingOccurrences(of: "-Users-", with: "/Users/")
-        let components = slashNormalized
-            .split(separator: "/")
-            .map(String.init)
-            .filter { !$0.isEmpty }
-
-        guard components.count > 2 else {
-            return trimmed
-        }
-
-        return components.suffix(2).joined(separator: "/")
-    }
-
-    static func activityDate(_ value: String) -> String {
-        if value.count >= 10 {
-            return String(value.prefix(10))
-        }
-        return value.isEmpty ? "-" : value
     }
 
     private static func compactDecimal(_ value: Double) -> String {
@@ -275,51 +165,6 @@ enum UsageStatsAggregator {
                 }
         case .week, .month:
             return groupedBuckets(entries, by: aggregation)
-        }
-    }
-
-    static func sessionBuckets(
-        _ sessions: [UsageSessionEntry],
-        by aggregation: UsageSessionAggregation,
-        limitPerBucket: Int = 10,
-        globalLimit: Int = 10
-    ) -> [UsageSessionBucket] {
-        let sortedSessions = sessions.sorted { lhs, rhs in
-            if lhs.totalTokens == rhs.totalTokens {
-                return lhs.lastActivity > rhs.lastActivity
-            }
-            return lhs.totalTokens > rhs.totalTokens
-        }
-
-        switch aggregation {
-        case .all:
-            return [
-                UsageSessionBucket(label: "All", sessions: Array(sortedSessions.prefix(globalLimit)))
-            ].filter { !$0.sessions.isEmpty }
-        case .day, .week, .month:
-            let groups = Dictionary(grouping: sortedSessions) { session -> String in
-                switch aggregation {
-                case .all:
-                    return "All"
-                case .day:
-                    return session.lastActivity
-                case .week:
-                    return weekLabel(for: session.lastActivity)
-                case .month:
-                    return String(session.lastActivity.prefix(7))
-                }
-            }
-
-            return groups.keys.sorted(by: >).map { label in
-                let values = (groups[label] ?? []).sorted { lhs, rhs in
-                    if lhs.totalTokens == rhs.totalTokens {
-                        return lhs.lastActivity > rhs.lastActivity
-                    }
-                    return lhs.totalTokens > rhs.totalTokens
-                }
-                return UsageSessionBucket(label: label, sessions: Array(values.prefix(limitPerBucket)))
-            }
-            .filter { !$0.sessions.isEmpty }
         }
     }
 
@@ -561,76 +406,5 @@ private struct CodexCcusageTotals: Decodable {
             totalTokens: totalTokens,
             totalCostUSD: costUSD ?? 0
         )
-    }
-}
-
-private struct ClaudeSessionResponse: Decodable {
-    let sessions: [ClaudeSessionEntry]?
-    let data: [ClaudeSessionEntry]?
-}
-
-private struct ClaudeSessionEntry: Decodable {
-    let sessionId: String
-    let projectPath: String?
-    let inputTokens: Int
-    let outputTokens: Int
-    let cacheCreationTokens: Int
-    let cacheReadTokens: Int
-    let totalTokens: Int
-    let totalCost: Double?
-    let costUSD: Double?
-    let lastActivity: String
-    let modelsUsed: [String]?
-
-    var entry: UsageSessionEntry {
-        UsageSessionEntry(
-            source: .claude,
-            sessionId: sessionId,
-            projectPath: projectPath ?? "Unknown Project",
-            lastActivity: UsageValueFormatter.activityDate(lastActivity),
-            inputTokens: inputTokens,
-            outputTokens: outputTokens,
-            cacheTokens: cacheCreationTokens + cacheReadTokens,
-            totalTokens: totalTokens,
-            costUSD: totalCost ?? costUSD ?? 0,
-            models: modelsUsed ?? []
-        )
-    }
-}
-
-private struct CodexSessionResponse: Decodable {
-    let sessions: [CodexSessionEntry]
-}
-
-private struct CodexSessionEntry: Decodable {
-    let sessionId: String
-    let sessionFile: String?
-    let directory: String?
-    let inputTokens: Int
-    let cachedInputTokens: Int
-    let outputTokens: Int
-    let totalTokens: Int
-    let costUSD: Double?
-    let lastActivity: String
-    let models: [String: CodexCcusageModelUsage]?
-
-    var entry: UsageSessionEntry {
-        UsageSessionEntry(
-            source: .codex,
-            sessionId: sessionId,
-            projectPath: sessionFile ?? directory ?? sessionId,
-            lastActivity: UsageValueFormatter.activityDate(lastActivity),
-            inputTokens: inputTokens,
-            outputTokens: outputTokens,
-            cacheTokens: cachedInputTokens,
-            totalTokens: totalTokens,
-            costUSD: costUSD ?? 0,
-            models: modelNames
-        )
-    }
-
-    private var modelNames: [String] {
-        let names = (models ?? [:]).keys.sorted()
-        return names.isEmpty ? ["Codex"] : names
     }
 }

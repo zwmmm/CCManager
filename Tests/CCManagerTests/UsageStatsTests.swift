@@ -121,76 +121,6 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(report.summary.totalCostUSD, 1.2849767)
     }
 
-    func testParsesClaudeSessionJSONShape() throws {
-        let json = """
-        {
-          "sessions": [
-            {
-              "sessionId": "-Users-sanyi-ensoai-repos-github-zwmmm-CCManager",
-              "projectPath": "Unknown Project",
-              "inputTokens": 70014520,
-              "outputTokens": 916433,
-              "cacheCreationTokens": 2761625,
-              "cacheReadTokens": 111320119,
-              "totalTokens": 185012697,
-              "totalCost": 0,
-              "lastActivity": "2026-05-10",
-              "modelsUsed": ["MiniMax-M2.7", "glm-5"]
-            }
-          ]
-        }
-        """
-
-        let sessions = try UsageSessionParser.parseClaude(Data(json.utf8))
-
-        XCTAssertEqual(sessions.count, 1)
-        XCTAssertEqual(sessions[0].source, .claude)
-        XCTAssertEqual(sessions[0].displayName, "zwmmm/CCManager")
-        XCTAssertEqual(sessions[0].cacheTokens, 114_081_744)
-        XCTAssertEqual(sessions[0].totalTokens, 185_012_697)
-        XCTAssertEqual(sessions[0].models, ["MiniMax-M2.7", "glm-5"])
-    }
-
-    func testParsesCodexSessionJSONShape() throws {
-        let json = """
-        {
-          "sessions": [
-            {
-              "sessionId": "2026/03/06/rollout-2026-03-06T14-46-37-019cc1e5",
-              "lastActivity": "2026-03-06T06:52:40.879Z",
-              "sessionFile": "rollout-2026-03-06T14-46-37-019cc1e5",
-              "directory": "2026/03/06",
-              "inputTokens": 767360,
-              "cachedInputTokens": 594176,
-              "outputTokens": 14918,
-              "reasoningOutputTokens": 10249,
-              "totalTokens": 782278,
-              "costUSD": 0.6159048,
-              "models": {
-                "gpt-5.3-codex": {
-                  "inputTokens": 767360,
-                  "cachedInputTokens": 594176,
-                  "outputTokens": 14918,
-                  "reasoningOutputTokens": 10249,
-                  "totalTokens": 782278,
-                  "isFallback": false
-                }
-              }
-            }
-          ]
-        }
-        """
-
-        let sessions = try UsageSessionParser.parseCodex(Data(json.utf8))
-
-        XCTAssertEqual(sessions.count, 1)
-        XCTAssertEqual(sessions[0].source, .codex)
-        XCTAssertEqual(sessions[0].lastActivity, "2026-03-06")
-        XCTAssertEqual(sessions[0].cacheTokens, 594_176)
-        XCTAssertEqual(sessions[0].totalTokens, 782_278)
-        XCTAssertEqual(sessions[0].models, ["gpt-5.3-codex"])
-    }
-
     func testAggregatesDailyEntriesByWeekAndMonth() throws {
         let entries = [
             UsageDailyEntry(date: "2026-05-04", inputTokens: 10, outputTokens: 10, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 20, costUSD: 0.1, models: []),
@@ -207,34 +137,6 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(monthly.map(\.label), ["2026-05", "2026-06"])
         XCTAssertEqual(monthly[0].totalTokens, 60)
         XCTAssertEqual(monthly[1].totalTokens, 60)
-    }
-
-    func testBucketsTopSessionsBySelectedAggregation() {
-        let sessions = [
-            UsageSessionEntry(source: .claude, sessionId: "a", projectPath: "project-a", lastActivity: "2026-05-04", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 20, costUSD: 0, models: []),
-            UsageSessionEntry(source: .claude, sessionId: "b", projectPath: "project-b", lastActivity: "2026-05-05", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 80, costUSD: 0, models: []),
-            UsageSessionEntry(source: .codex, sessionId: "c", projectPath: "project-c", lastActivity: "2026-05-05", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 40, costUSD: 0, models: []),
-            UsageSessionEntry(source: .codex, sessionId: "d", projectPath: "project-d", lastActivity: "2026-06-01", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 120, costUSD: 0, models: [])
-        ]
-
-        let global = UsageStatsAggregator.sessionBuckets(sessions, by: .all, globalLimit: 2)
-        let daily = UsageStatsAggregator.sessionBuckets(sessions, by: .day, limitPerBucket: 1)
-        let monthly = UsageStatsAggregator.sessionBuckets(sessions, by: .month, limitPerBucket: 2)
-
-        XCTAssertEqual(global.map(\.label), ["All"])
-        XCTAssertEqual(global[0].sessions.map(\.sessionId), ["d", "b"])
-        XCTAssertEqual(daily.map(\.label), ["2026-06-01", "2026-05-05", "2026-05-04"])
-        XCTAssertEqual(daily[1].sessions.map(\.sessionId), ["b"])
-        XCTAssertEqual(monthly.map(\.label), ["2026-06", "2026-05"])
-        XCTAssertEqual(monthly[1].sessions.map(\.sessionId), ["b", "c"])
-    }
-
-    func testBuildsResumeCommandsForSessionSources() {
-        let claude = UsageSessionEntry(source: .claude, sessionId: "abc'123", projectPath: "project-a", lastActivity: "2026-05-04", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 20, costUSD: 0, models: [])
-        let codex = UsageSessionEntry(source: .codex, sessionId: "2026/03/06/rollout-123", projectPath: "project-b", lastActivity: "2026-05-05", inputTokens: 0, outputTokens: 0, cacheTokens: 0, totalTokens: 80, costUSD: 0, models: [])
-
-        XCTAssertEqual(UsageSessionLauncher.resumeCommand(for: claude), "claude --resume 'abc'\\''123'")
-        XCTAssertEqual(UsageSessionLauncher.resumeCommand(for: codex), "codex resume --all '2026/03/06/rollout-123'")
     }
 
     func testMergesEntriesByDateForCombinedClaudeAndCodexTotals() {
