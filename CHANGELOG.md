@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.11] - 2026-05-26
+
+### Bug Fixes
+
+- Update Usage Statistics to rely on the unified `ccusage` all-agent report and support the latest daily JSON shape
+- Run `npx` directly for usage refreshes to avoid loading interactive shell startup files
+- Polish Usage Statistics refresh feedback and summary row alignment
+
 ## [1.12.10] - 2026-05-26
 
 ### Bug Fixes

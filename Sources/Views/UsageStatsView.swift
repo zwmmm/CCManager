@@ -7,7 +7,6 @@ struct UsageStatsView: View {
 
     @State private var summaryAggregation: UsageAggregation = .day
     @State private var isAppearing = false
-    @State private var refreshRotation = 0.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -49,7 +48,7 @@ struct UsageStatsView: View {
                         .foregroundStyle(AppTheme.textPrimary)
                 }
 
-                Text("ccusage + @ccusage/codex")
+                Text("ccusage")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(AppTheme.textTertiary)
             }
@@ -59,38 +58,20 @@ struct UsageStatsView: View {
             Button {
                 usageManager.refresh()
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.clockwise")
-                        .rotationEffect(.degrees(refreshRotation))
-                    Text(usageManager.isRefreshing ? "Refreshing" : "Refresh")
-                }
-                .font(.system(size: 12, weight: .semibold))
+                Text(usageManager.isRefreshing ? "Refreshing" : "Refresh")
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: 74)
             }
             .buttonStyle(SecondaryDashboardButtonStyle())
+            .modifier(MovingRefreshBorder(isActive: usageManager.isRefreshing, accent: themeManager.brandColor))
             .disabled(usageManager.isRefreshing)
-            .onAppear {
-                updateRefreshRotation(usageManager.isRefreshing)
-            }
-            .onChange(of: usageManager.isRefreshing) { isRefreshing in
-                updateRefreshRotation(isRefreshing)
-            }
-        }
-    }
-
-    private func updateRefreshRotation(_ isRefreshing: Bool) {
-        if isRefreshing {
-            refreshRotation = 0
-            withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
-                refreshRotation = 360
-            }
-        } else {
-            refreshRotation = 0
         }
     }
 
     private func reportView(_ report: UsageReport) -> some View {
         let buckets = UsageStatsAggregator.aggregate(report.entries, by: summaryAggregation)
         let visibleBuckets = Array(buckets.reversed())
+        let chipWidths = UsageTokenChipWidths(buckets: visibleBuckets)
 
         return VStack(alignment: .leading, spacing: 14) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
@@ -107,7 +88,7 @@ struct UsageStatsView: View {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(visibleBuckets) { bucket in
-                                UsageBucketRow(bucket: bucket, accent: themeManager.brandColor)
+                                UsageBucketRow(bucket: bucket, chipWidths: chipWidths, accent: themeManager.brandColor)
                                 if bucket.id != visibleBuckets.last?.id {
                                     Rectangle()
                                         .fill(AppTheme.separator)
@@ -255,6 +236,61 @@ struct UsageStatsView: View {
     }
 }
 
+private struct MovingRefreshBorder: ViewModifier {
+    let isActive: Bool
+    let accent: Color
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if isActive {
+                    TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+                        let duration = 1.25
+                        let phase = timeline.date.timeIntervalSinceReferenceDate
+                            .truncatingRemainder(dividingBy: duration) / duration
+
+                        ZStack {
+                            movingStroke(from: phase, length: 0.18)
+                        }
+                    }
+                    .allowsHitTesting(false)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private func movingStroke(from phase: Double, length: Double) -> some View {
+        let start = phase.truncatingRemainder(dividingBy: 1)
+        let end = start + length
+
+        if end <= 1 {
+            trimmedStroke(from: start, to: end)
+        } else {
+            trimmedStroke(from: start, to: 1)
+            trimmedStroke(from: 0, to: end - 1)
+        }
+    }
+
+    private func trimmedStroke(from start: Double, to end: Double) -> some View {
+        RoundedRectangle(cornerRadius: 11, style: .continuous)
+            .trim(from: CGFloat(start), to: CGFloat(end))
+            .stroke(
+                LinearGradient(
+                    colors: [
+                        accent.opacity(0.1),
+                        accent.opacity(0.86),
+                        Color.white.opacity(0.78),
+                        accent.opacity(0.18)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+            )
+            .shadow(color: accent.opacity(0.16), radius: 7, x: 0, y: 0)
+    }
+}
+
 private struct UsageMetricCard: View {
     let title: String
     let value: String
@@ -311,6 +347,7 @@ private struct UsageMetricCard: View {
 
 private struct UsageBucketRow: View {
     let bucket: UsageBucket
+    let chipWidths: UsageTokenChipWidths
     let accent: Color
 
     var body: some View {
@@ -320,9 +357,9 @@ private struct UsageBucketRow: View {
                 .foregroundStyle(AppTheme.textPrimary)
                 .frame(width: 92, alignment: .leading)
 
-            UsageTokenChip(title: "Total", value: UsageValueFormatter.tokenCount(bucket.totalTokens), accent: accent)
-            UsageTokenChip(title: "In", value: UsageValueFormatter.tokenCount(bucket.inputTokens), accent: .blue)
-            UsageTokenChip(title: "Out", value: UsageValueFormatter.tokenCount(bucket.outputTokens), accent: .orange)
+            UsageTokenChip(title: "Total", value: UsageValueFormatter.tokenCount(bucket.totalTokens), width: chipWidths.total, accent: accent)
+            UsageTokenChip(title: "In", value: UsageValueFormatter.tokenCount(bucket.inputTokens), width: chipWidths.input, accent: .blue)
+            UsageTokenChip(title: "Out", value: UsageValueFormatter.tokenCount(bucket.outputTokens), width: chipWidths.output, accent: .orange)
 
             Spacer(minLength: 8)
 
@@ -339,6 +376,7 @@ private struct UsageBucketRow: View {
 private struct UsageTokenChip: View {
     let title: String
     let value: String
+    let width: CGFloat
     let accent: Color
 
     var body: some View {
@@ -359,6 +397,7 @@ private struct UsageTokenChip: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
+        .frame(width: width, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .fill(accent.opacity(0.08))
@@ -367,6 +406,41 @@ private struct UsageTokenChip: View {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(accent.opacity(0.12), lineWidth: 1)
         }
+    }
+}
+
+private struct UsageTokenChipWidths {
+    let total: CGFloat
+    let input: CGFloat
+    let output: CGFloat
+
+    init(buckets: [UsageBucket]) {
+        total = Self.width(
+            title: "Total",
+            values: buckets.map { UsageValueFormatter.tokenCount($0.totalTokens) }
+        )
+        input = Self.width(
+            title: "In",
+            values: buckets.map { UsageValueFormatter.tokenCount($0.inputTokens) }
+        )
+        output = Self.width(
+            title: "Out",
+            values: buckets.map { UsageValueFormatter.tokenCount($0.outputTokens) }
+        )
+    }
+
+    private static func width(title: String, values: [String]) -> CGFloat {
+        let titleWidth = measuredWidth(title, size: 9, weight: .bold)
+        let valueWidth = values.map { measuredWidth($0, size: 11, weight: .bold) }.max() ?? 0
+        let dotAndSpacing: CGFloat = 15
+        let textSpacing: CGFloat = 5
+        let horizontalPadding: CGFloat = 16
+        return ceil(dotAndSpacing + titleWidth + textSpacing + valueWidth + horizontalPadding)
+    }
+
+    private static func measuredWidth(_ value: String, size: CGFloat, weight: NSFont.Weight) -> CGFloat {
+        let font = NSFont.monospacedSystemFont(ofSize: size, weight: weight)
+        return (value as NSString).size(withAttributes: [.font: font]).width
     }
 }
 

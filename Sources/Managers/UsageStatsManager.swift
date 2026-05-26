@@ -38,19 +38,8 @@ final class UsageStatsManager: ObservableObject {
         Task {
             do {
                 let environment = UsageCommandResolver.shellEnvironment()
-                async let claudeResult = Self.loadReport { try await Self.runCcusageDailyJSON(environment: environment) }
-                async let codexResult = Self.loadReport { try await Self.runCodexDailyJSON(environment: environment) }
-
-                let results = await [claudeResult, codexResult]
-                let reports = results.compactMap { try? $0.get() }
-                guard !reports.isEmpty else {
-                    throw results.compactMap { result -> Error? in
-                        if case .failure(let error) = result { return error }
-                        return nil
-                    }.first ?? UsageStatsProcessError.emptyOutput
-                }
-
-                let report = UsageReport.merged(reports)
+                let data = try await Self.runCcusageDailyJSON(environment: environment)
+                let report = try UsageStatsParser.parse(data)
 
                 withAnimationIfAvailable {
                     state = .loaded(report)
@@ -65,35 +54,16 @@ final class UsageStatsManager: ObservableObject {
         }
     }
 
-    private static func loadReport(_ dataLoader: @escaping () async throws -> Data) async -> Result<UsageReport, Error> {
-        do {
-            let data = try await dataLoader()
-            return .success(try UsageStatsParser.parse(data))
-        } catch {
-            return .failure(error)
-        }
-    }
-
     private static func runCcusageDailyJSON(environment: [String: String]) async throws -> Data {
+        let executable = try UsageCommandResolver.executablePath(named: "npx", environment: environment)
         let output = try await runProcess(
-            executable: "/bin/zsh",
-            arguments: ["-ic", "npx --yes ccusage@latest daily --json --offline --since \(defaultSinceDateString())"],
+            executable: executable,
+            arguments: ["--yes", "ccusage@latest", "daily", "--json", "--offline", "--since", defaultSinceDateString()],
             timeout: 45,
             environment: environment
         )
 
         return try jsonData(from: output, commandName: "ccusage")
-    }
-
-    private static func runCodexDailyJSON(environment: [String: String]) async throws -> Data {
-        let output = try await runProcess(
-            executable: "/bin/zsh",
-            arguments: ["-ic", "npx --yes @ccusage/codex@latest daily --json --offline --since \(defaultSinceDateString())"],
-            timeout: 45,
-            environment: environment
-        )
-
-        return try jsonData(from: output, commandName: "@ccusage/codex")
     }
 
     private static func jsonData(from output: ProcessOutput, commandName: String) throws -> Data {
@@ -195,9 +165,20 @@ enum UsageCommandResolver {
         var environment = ProcessInfo.processInfo.environment
         environment["PATH"] = path
         environment["HOME"] = homeDirectory.path
-        environment["SHELL"] = "/bin/zsh"
 
         return environment
+    }
+
+    static func executablePath(named name: String, environment: [String: String]) throws -> String {
+        let path = environment["PATH"] ?? ""
+        for directory in path.split(separator: ":").map(String.init) where !directory.isEmpty {
+            let candidate = URL(fileURLWithPath: directory).appendingPathComponent(name).path
+            if FileManager.default.isExecutableFile(atPath: candidate) {
+                return candidate
+            }
+        }
+
+        throw UsageStatsProcessError.commandFailed("Could not find \(name). Install Node.js/npm or make sure \(name) is in PATH.")
     }
 
     static func enhancedPath(currentPath: String, homeDirectory: URL) -> String {

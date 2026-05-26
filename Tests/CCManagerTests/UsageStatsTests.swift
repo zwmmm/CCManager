@@ -75,6 +75,46 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(report.summary.totalCostUSD, 0.42)
     }
 
+    func testParsesCurrentAllAgentsCcusageDailyJSONShape() throws {
+        let json = """
+        {
+          "daily": [
+            {
+              "period": "2026-05-08",
+              "agent": "mixed",
+              "modelsUsed": ["claude-sonnet-4-20250514", "gpt-5.3-codex"],
+              "inputTokens": 100,
+              "outputTokens": 200,
+              "cacheCreationTokens": 30,
+              "cacheReadTokens": 40,
+              "totalTokens": 370,
+              "totalCost": 1.25,
+              "metadata": {
+                "agents": []
+              },
+              "modelBreakdowns": []
+            }
+          ],
+          "totals": {
+            "inputTokens": 100,
+            "outputTokens": 200,
+            "cacheCreationTokens": 30,
+            "cacheReadTokens": 40,
+            "totalTokens": 370,
+            "totalCost": 1.25
+          }
+        }
+        """
+
+        let report = try UsageStatsParser.parse(Data(json.utf8))
+
+        XCTAssertEqual(report.entries.count, 1)
+        XCTAssertEqual(report.entries[0].date, "2026-05-08")
+        XCTAssertEqual(report.entries[0].models, ["claude-sonnet-4-20250514", "gpt-5.3-codex"])
+        XCTAssertEqual(report.summary.totalTokens, 370)
+        XCTAssertEqual(report.summary.totalCostUSD, 1.25)
+    }
+
     func testParsesCodexCcusageDailyJSONShape() throws {
         let json = """
         {
@@ -139,27 +179,6 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(monthly[1].totalTokens, 60)
     }
 
-    func testMergesEntriesByDateForCombinedClaudeAndCodexTotals() {
-        let claude = UsageReport(entries: [
-            UsageDailyEntry(date: "2026-05-08", inputTokens: 100, outputTokens: 200, cacheCreationTokens: 30, cacheReadTokens: 40, totalTokens: 370, costUSD: 1.25, models: ["Claude Code"]),
-            UsageDailyEntry(date: "2026-05-09", inputTokens: 10, outputTokens: 20, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 30, costUSD: 0.1, models: ["Claude Code"])
-        ], summary: UsageSummary(inputTokens: 110, outputTokens: 220, cacheCreationTokens: 30, cacheReadTokens: 40, totalTokens: 400, totalCostUSD: 1.35))
-
-        let codex = UsageReport(entries: [
-            UsageDailyEntry(date: "2026-05-08", inputTokens: 300, outputTokens: 400, cacheCreationTokens: 250, cacheReadTokens: 0, totalTokens: 700, costUSD: 0, models: ["Codex"])
-        ], summary: UsageSummary(inputTokens: 300, outputTokens: 400, cacheCreationTokens: 250, cacheReadTokens: 0, totalTokens: 700, totalCostUSD: 0))
-
-        let merged = UsageReport.merged([claude, codex])
-
-        XCTAssertEqual(merged.entries.map(\.date), ["2026-05-08", "2026-05-09"])
-        XCTAssertEqual(merged.entries[0].inputTokens, 400)
-        XCTAssertEqual(merged.entries[0].outputTokens, 600)
-        XCTAssertEqual(merged.entries[0].cacheCreationTokens, 280)
-        XCTAssertEqual(merged.entries[0].totalTokens, 1_070)
-        XCTAssertEqual(merged.entries[0].models, ["Claude Code", "Codex"])
-        XCTAssertEqual(merged.summary.totalTokens, 1_100)
-    }
-
     func testFormatsLargeTokenCountsWithCompactEnglishUnits() {
         XCTAssertEqual(UsageValueFormatter.tokenCount(999), "999")
         XCTAssertEqual(UsageValueFormatter.tokenCount(1_200), "1.2k")
@@ -186,11 +205,11 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(components.filter { $0 == "/usr/bin" }.count, 1)
     }
 
-    func testShellEnvironmentProvidesZshAndEnhancedPath() {
+    func testShellEnvironmentProvidesHomeAndEnhancedPath() {
         let environment = UsageCommandResolver.shellEnvironment()
         let path = environment["PATH"] ?? ""
 
-        XCTAssertEqual(environment["SHELL"], "/bin/zsh")
+        XCTAssertNotNil(environment["HOME"])
         XCTAssertTrue(path.contains("/opt/homebrew/bin"))
         XCTAssertTrue(path.contains("/.bun/bin"))
     }

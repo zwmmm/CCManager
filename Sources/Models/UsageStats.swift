@@ -29,33 +29,6 @@ struct UsageReport: Equatable {
         self.entries = entries
         self.summary = summary
     }
-
-    static func merged(_ reports: [UsageReport]) -> UsageReport {
-        let groupedEntries = Dictionary(grouping: reports.flatMap(\.entries), by: \.date)
-        let entries = groupedEntries.keys.sorted().map { date in
-            let values = groupedEntries[date] ?? []
-            let models = values
-                .flatMap(\.models)
-                .reduce(into: [String]()) { result, model in
-                    if !result.contains(model) {
-                        result.append(model)
-                    }
-                }
-
-            return UsageDailyEntry(
-                date: date,
-                inputTokens: values.reduce(0) { $0 + $1.inputTokens },
-                outputTokens: values.reduce(0) { $0 + $1.outputTokens },
-                cacheCreationTokens: values.reduce(0) { $0 + $1.cacheCreationTokens },
-                cacheReadTokens: values.reduce(0) { $0 + $1.cacheReadTokens },
-                totalTokens: values.reduce(0) { $0 + $1.totalTokens },
-                costUSD: values.reduce(0) { $0 + $1.costUSD },
-                models: models
-            )
-        }
-
-        return UsageReport(entries: entries, summary: UsageStatsAggregator.summary(for: entries))
-    }
 }
 
 struct UsageBucket: Identifiable, Equatable {
@@ -314,6 +287,31 @@ private struct LegacyCcusageDailyEntry: Decodable {
     let cacheReadTokens: Int
     let totalTokens: Int
     let totalCost: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case date
+        case period
+        case modelsUsed
+        case inputTokens
+        case outputTokens
+        case cacheCreationTokens
+        case cacheReadTokens
+        case totalTokens
+        case totalCost
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        date = try container.decodeIfPresent(String.self, forKey: .date)
+            ?? container.decode(String.self, forKey: .period)
+        modelsUsed = try container.decodeIfPresent([String].self, forKey: .modelsUsed)
+        inputTokens = try container.decode(Int.self, forKey: .inputTokens)
+        outputTokens = try container.decode(Int.self, forKey: .outputTokens)
+        cacheCreationTokens = try container.decode(Int.self, forKey: .cacheCreationTokens)
+        cacheReadTokens = try container.decode(Int.self, forKey: .cacheReadTokens)
+        totalTokens = try container.decode(Int.self, forKey: .totalTokens)
+        totalCost = try container.decodeIfPresent(Double.self, forKey: .totalCost)
+    }
 
     var entry: UsageDailyEntry {
         UsageDailyEntry(
