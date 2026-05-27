@@ -37,7 +37,7 @@ final class UsageStatsManager: ObservableObject {
 
         Task {
             do {
-                let environment = UsageCommandResolver.shellEnvironment()
+                let environment = try await UsageCommandResolver.shellEnvironment()
                 let data = try await Self.runCcusageDailyJSON(environment: environment)
                 let report = try UsageStatsParser.parse(data)
 
@@ -155,17 +155,54 @@ final class UsageStatsManager: ObservableObject {
 }
 
 enum UsageCommandResolver {
-    static func shellEnvironment() -> [String: String] {
-        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
-        let path = enhancedPath(
-            currentPath: ProcessInfo.processInfo.environment["PATH"] ?? "",
+    private static let environmentBeginMarker = "__CCMANAGER_ENV_BEGIN__"
+    private static let environmentEndMarker = "__CCMANAGER_ENV_END__"
+
+    static func shellEnvironment(
+        baseEnvironment: [String: String] = ProcessInfo.processInfo.environment,
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+    ) async throws -> [String: String] {
+        let shell = shellPath(from: baseEnvironment)
+        let output = try await runShellEnvironment(
+            shell: shell,
+            baseEnvironment: baseEnvironment,
             homeDirectory: homeDirectory
         )
 
-        var environment = ProcessInfo.processInfo.environment
-        environment["PATH"] = path
+        return environment(
+            fromShellOutput: output,
+            baseEnvironment: baseEnvironment,
+            homeDirectory: homeDirectory
+        )
+    }
+
+    static func environment(
+        fromShellOutput output: String,
+        baseEnvironment: [String: String],
+        homeDirectory: URL
+    ) -> [String: String] {
+        var environment = baseEnvironment
+
         environment["HOME"] = homeDirectory.path
 
+        guard
+            let beginRange = output.range(of: environmentBeginMarker),
+            let endRange = output.range(of: environmentEndMarker, range: beginRange.upperBound..<output.endIndex)
+        else {
+            return environment
+        }
+
+        let envOutput = output[beginRange.upperBound..<endRange.lowerBound]
+        for line in envOutput.split(whereSeparator: \.isNewline) {
+            guard let separator = line.firstIndex(of: "=") else { continue }
+            let key = String(line[..<separator])
+            let value = String(line[line.index(after: separator)...])
+            if !key.isEmpty {
+                environment[key] = value
+            }
+        }
+
+        environment["HOME"] = homeDirectory.path
         return environment
     }
 
@@ -181,30 +218,72 @@ enum UsageCommandResolver {
         throw UsageStatsProcessError.commandFailed("Could not find \(name). Install Node.js/npm or make sure \(name) is in PATH.")
     }
 
-    static func enhancedPath(currentPath: String, homeDirectory: URL) -> String {
-        let home = homeDirectory.path
-        let additions = [
-            "/opt/homebrew/bin",
-            "/usr/local/bin",
-            "\(home)/.bun/bin",
-            "\(home)/.npm-global/bin",
-            "\(home)/Library/pnpm",
-            "\(home)/.local/share/pnpm",
-            "\(home)/.local/bin",
-            "\(home)/.cargo/bin",
-            "\(home)/.deno/bin",
-            "/usr/bin",
-            "/bin",
-            "/usr/sbin",
-            "/sbin"
-        ]
+    static func shellPath(
+        from environment: [String: String],
+        isExecutable: (String) -> Bool = { FileManager.default.isExecutableFile(atPath: $0) }
+    ) -> String {
+        if let shell = environment["SHELL"], isExecutable(shell) {
+            return shell
+        }
 
-        var seen = Set<String>()
-        let components = (currentPath.split(separator: ":").map(String.init) + additions)
-            .filter { !$0.isEmpty }
-            .filter { seen.insert($0).inserted }
+        if isExecutable("/bin/zsh") {
+            return "/bin/zsh"
+        }
 
-        return components.joined(separator: ":")
+        return "/bin/bash"
+    }
+
+    private static func runShellEnvironment(
+        shell: String,
+        baseEnvironment: [String: String],
+        homeDirectory: URL
+    ) async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: shell)
+            process.arguments = [
+                "-ilc",
+                "printf '\\n\(environmentBeginMarker)\\n'; /usr/bin/env; printf '\\n\(environmentEndMarker)\\n'"
+            ]
+
+            var environment = baseEnvironment
+            environment["HOME"] = homeDirectory.path
+            process.environment = environment
+
+            let stdout = Pipe()
+            let stderr = Pipe()
+            process.standardOutput = stdout
+            process.standardError = stderr
+
+            let resumeGate = ShellEnvironmentResumeGate(continuation: continuation)
+
+            process.terminationHandler = { process in
+                let stdoutData = stdout.fileHandleForReading.readDataToEndOfFile()
+                let stderrData = stderr.fileHandleForReading.readDataToEndOfFile()
+                let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+                let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+
+                if process.terminationStatus == 0 {
+                    resumeGate.resume(.success(stdout))
+                } else {
+                    let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+                    resumeGate.resume(.failure(UsageStatsProcessError.commandFailed(message.isEmpty ? "Could not load shell environment." : message)))
+                }
+            }
+
+            do {
+                try process.run()
+            } catch {
+                resumeGate.resume(.failure(error))
+                return
+            }
+
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 10) {
+                guard process.isRunning else { return }
+                process.terminate()
+                resumeGate.resume(.failure(UsageStatsProcessError.timeout))
+            }
+        }
     }
 }
 
@@ -224,6 +303,24 @@ private final class ProcessResumeGate: @unchecked Sendable {
     }
 
     func resume(_ result: Result<ProcessOutput, Error>) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !didResume else { return }
+        didResume = true
+        continuation.resume(with: result)
+    }
+}
+
+private final class ShellEnvironmentResumeGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var didResume = false
+    private let continuation: CheckedContinuation<String, Error>
+
+    init(continuation: CheckedContinuation<String, Error>) {
+        self.continuation = continuation
+    }
+
+    func resume(_ result: Result<String, Error>) {
         lock.lock()
         defer { lock.unlock() }
         guard !didResume else { return }

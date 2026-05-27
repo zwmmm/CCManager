@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.12] - 2026-05-28
+
+### Bug Fixes
+
+- Load the user's configured shell environment before running Usage Statistics refreshes so `npx` can be found from shell-managed Node.js setups, with a bash fallback when zsh is unavailable
+
 ## [1.12.11] - 2026-05-26
 
 ### Bug Fixes

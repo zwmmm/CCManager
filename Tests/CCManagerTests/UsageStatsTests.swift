@@ -191,26 +191,50 @@ final class UsageStatsTests: XCTestCase {
         XCTAssertEqual(UsageValueFormatter.currencyUSD(12.3), "$12.30")
     }
 
-    func testEnhancedCommandPathIncludesUserPackageManagerBins() {
-        let path = UsageCommandResolver.enhancedPath(
-            currentPath: "/usr/bin:/bin",
+    func testShellEnvironmentParserUsesShellPath() {
+        let environment = UsageCommandResolver.environment(
+            fromShellOutput: """
+            noisy startup output
+            __CCMANAGER_ENV_BEGIN__
+            PATH=/Users/sanyi/.local/state/fnm_multishells/current/bin:/usr/bin:/bin
+            SHELL=/bin/zsh
+            HOME=/wrong/home
+            __CCMANAGER_ENV_END__
+            """,
+            baseEnvironment: [
+                "PATH": "/usr/bin:/bin",
+                "HOME": "/Users/sanyi"
+            ],
             homeDirectory: URL(fileURLWithPath: "/Users/sanyi")
         )
-        let components = path.split(separator: ":").map(String.init)
 
-        XCTAssertTrue(components.contains("/Users/sanyi/.bun/bin"))
-        XCTAssertTrue(components.contains("/Users/sanyi/.npm-global/bin"))
-        XCTAssertTrue(components.contains("/Users/sanyi/Library/pnpm"))
-        XCTAssertTrue(components.contains("/opt/homebrew/bin"))
-        XCTAssertEqual(components.filter { $0 == "/usr/bin" }.count, 1)
+        XCTAssertEqual(environment["PATH"], "/Users/sanyi/.local/state/fnm_multishells/current/bin:/usr/bin:/bin")
+        XCTAssertEqual(environment["SHELL"], "/bin/zsh")
+        XCTAssertEqual(environment["HOME"], "/Users/sanyi")
     }
 
-    func testShellEnvironmentProvidesHomeAndEnhancedPath() {
-        let environment = UsageCommandResolver.shellEnvironment()
-        let path = environment["PATH"] ?? ""
+    func testShellEnvironmentParserFallsBackToBaseEnvironmentWithoutMarkers() {
+        let environment = UsageCommandResolver.environment(
+            fromShellOutput: "no markers",
+            baseEnvironment: [
+                "PATH": "/usr/bin:/bin",
+                "HOME": "/Users/sanyi"
+            ],
+            homeDirectory: URL(fileURLWithPath: "/Users/sanyi")
+        )
 
-        XCTAssertNotNil(environment["HOME"])
-        XCTAssertTrue(path.contains("/opt/homebrew/bin"))
-        XCTAssertTrue(path.contains("/.bun/bin"))
+        XCTAssertEqual(environment["PATH"], "/usr/bin:/bin")
+        XCTAssertEqual(environment["HOME"], "/Users/sanyi")
+    }
+
+    func testShellPathFallsBackToBashWhenConfiguredShellAndZshAreMissing() {
+        let shell = UsageCommandResolver.shellPath(
+            from: ["SHELL": "/missing/zsh"],
+            isExecutable: { path in
+                path == "/bin/bash"
+            }
+        )
+
+        XCTAssertEqual(shell, "/bin/bash")
     }
 }

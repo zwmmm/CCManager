@@ -1,5 +1,3 @@
 ### Bug Fixes
 
-- Update Usage Statistics to rely on the unified `ccusage` all-agent report and support the latest daily JSON shape
-- Run `npx` directly for usage refreshes to avoid loading interactive shell startup files
-- Polish Usage Statistics refresh feedback and summary row alignment
+- Load the user's configured shell environment before running Usage Statistics refreshes so `npx` can be found from shell-managed Node.js setups, with a bash fallback when zsh is unavailable
