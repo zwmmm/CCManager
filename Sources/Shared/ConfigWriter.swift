@@ -72,11 +72,7 @@ final class ConfigWriter {
 
         let model = provider.model ?? PresetProvider.defaultCodexModel
         let providerKey = "ccmanager"  // fixed provider key
-
-        let config = """
-        model_provider = "\(providerKey)"
-        model = "\(model)"
-
+        let providerSection = """
         [model_providers.\(providerKey)]
         name = "\(providerKey)"
         base_url = "\(provider.baseUrl)"
@@ -85,7 +81,11 @@ final class ConfigWriter {
         experimental_bearer_token = "\(provider.apiKey ?? "")"
         """
 
-        try config.write(to: codexConfig, atomically: true, encoding: .utf8)
+        try updateCodexConfig(
+            model: model,
+            modelProvider: providerKey,
+            managedProviderSection: providerSection
+        )
     }
 
     // MARK: - Codex OAuth → ~/.codex/auth.json + config.toml
@@ -113,13 +113,119 @@ final class ConfigWriter {
         let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
         try authData.write(to: authUrl, options: .atomic)
 
-        // Write config.toml (only model field, no model_provider)
+        // Update only CCManager-owned fields in config.toml.
         let model = provider.model ?? PresetProvider.defaultCodexModel
-        let configContent = """
-        model = "\(model)"
+        try updateCodexConfig(model: model, modelProvider: nil, managedProviderSection: nil)
+    }
 
-        """
-        try configContent.write(to: codexConfig, atomically: true, encoding: .utf8)
+    private func updateCodexConfig(
+        model: String,
+        modelProvider: String?,
+        managedProviderSection: String?
+    ) throws {
+        let existingConfig = fileManager.fileExists(atPath: codexConfig.path)
+            ? try String(contentsOf: codexConfig, encoding: .utf8)
+            : ""
+        var lines = splitPreservingLineEndings(existingConfig)
+
+        setTopLevelValue("model", to: model, in: &lines)
+        setTopLevelValue("model_provider", to: modelProvider, in: &lines)
+        removeManagedCodexProviderSection(from: &lines)
+
+        if let managedProviderSection {
+            let detectedLineEnding = lines.compactMap(lineEnding(of:)).first ?? "\n"
+            if !lines.isEmpty {
+                if lineEnding(of: lines[lines.count - 1]) == nil {
+                    lines[lines.count - 1] += detectedLineEnding
+                }
+                if !lineBody(of: lines[lines.count - 1]).isEmpty {
+                    lines.append(detectedLineEnding)
+                }
+            }
+            lines.append(contentsOf: splitPreservingLineEndings(
+                managedProviderSection.replacingOccurrences(of: "\n", with: detectedLineEnding) + detectedLineEnding
+            ))
+        }
+
+        try lines.joined().write(to: codexConfig, atomically: true, encoding: .utf8)
+    }
+
+    private func setTopLevelValue(_ key: String, to value: String?, in lines: inout [String]) {
+        let firstTableIndex = lines.firstIndex(where: isTableHeader) ?? lines.endIndex
+        let matchingIndexes = lines.indices.prefix(upTo: firstTableIndex).filter {
+            isAssignment(to: key, line: lines[$0])
+        }
+
+        if let value {
+            let replacement = "\(key) = \"\(value)\""
+            if let firstIndex = matchingIndexes.first {
+                lines[firstIndex] = replacement + (lineEnding(of: lines[firstIndex]) ?? "")
+                for index in matchingIndexes.dropFirst().reversed() {
+                    lines.remove(at: index)
+                }
+            } else {
+                let lineEnding = lines.compactMap(lineEnding(of:)).first ?? "\n"
+                lines.insert(replacement + lineEnding, at: firstTableIndex)
+            }
+        } else {
+            for index in matchingIndexes.reversed() {
+                lines.remove(at: index)
+            }
+        }
+    }
+
+    private func removeManagedCodexProviderSection(from lines: inout [String]) {
+        while let sectionStart = lines.firstIndex(where: isManagedCodexProviderHeader) {
+            let nextSection = lines.indices.dropFirst(sectionStart + 1).first {
+                isTableHeader(lines[$0])
+            } ?? lines.endIndex
+            lines.removeSubrange(sectionStart..<nextSection)
+        }
+    }
+
+    private func splitPreservingLineEndings(_ content: String) -> [String] {
+        var lines: [String] = []
+        var lineStart = content.startIndex
+
+        while let newlineIndex = content[lineStart...].firstIndex(of: "\n") {
+            let lineEnd = content.index(after: newlineIndex)
+            lines.append(String(content[lineStart..<lineEnd]))
+            lineStart = lineEnd
+        }
+        if lineStart < content.endIndex {
+            lines.append(String(content[lineStart...]))
+        }
+        return lines
+    }
+
+    private func lineBody(of line: String) -> String {
+        if line.hasSuffix("\r\n") { return String(line.dropLast(2)) }
+        if line.hasSuffix("\n") { return String(line.dropLast()) }
+        return line
+    }
+
+    private func lineEnding(of line: String) -> String? {
+        if line.hasSuffix("\r\n") { return "\r\n" }
+        if line.hasSuffix("\n") { return "\n" }
+        return nil
+    }
+
+    private func isTableHeader(_ line: String) -> Bool {
+        lineBody(of: line).trimmingCharacters(in: .whitespaces).hasPrefix("[")
+    }
+
+    private func isManagedCodexProviderHeader(_ line: String) -> Bool {
+        let header = "[model_providers.ccmanager]"
+        let trimmed = lineBody(of: line).trimmingCharacters(in: .whitespaces)
+        guard trimmed.hasPrefix(header) else { return false }
+        let remainder = trimmed.dropFirst(header.count).trimmingCharacters(in: .whitespaces)
+        return remainder.isEmpty || remainder.hasPrefix("#")
+    }
+
+    private func isAssignment(to key: String, line: String) -> Bool {
+        let trimmed = lineBody(of: line).drop(while: { $0 == " " || $0 == "\t" })
+        guard trimmed.hasPrefix(key) else { return false }
+        return trimmed.dropFirst(key.count).drop(while: { $0 == " " || $0 == "\t" }).hasPrefix("=")
     }
 
     // MARK: - Read helpers
