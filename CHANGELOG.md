@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.13] - 2026-07-15
+
+### Bug Fixes
+
+- Preserve user-defined Codex settings when switching providers by updating only CCManager-managed fields and refusing to overwrite unreadable configuration files
+
 ## [1.12.12] - 2026-05-28
 
 ### Bug Fixes

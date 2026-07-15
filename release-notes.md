@@ -1,3 +1,3 @@
 ### Bug Fixes
 
-- Load the user's configured shell environment before running Usage Statistics refreshes so `npx` can be found from shell-managed Node.js setups, with a bash fallback when zsh is unavailable
+- Preserve user-defined Codex settings when switching providers by updating only CCManager-managed fields and refusing to overwrite unreadable configuration files
