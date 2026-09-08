@@ -19,7 +19,7 @@ final class ConfigWriterTests: XCTestCase {
         try super.tearDownWithError()
     }
 
-    func testCodexWritesBearerTokenInModelProviderWithoutAuthJson() throws {
+    func testCodexWritesApiKeyToAuthJsonAndModelProviderWithoutBearerToken() throws {
         let writer = ConfigWriter(home: tempDirectory)
         let provider = Provider(
             name: "OpenAI",
@@ -34,14 +34,21 @@ final class ConfigWriterTests: XCTestCase {
         let authURL = tempDirectory.appendingPathComponent(".codex/auth.json")
         let configURL = tempDirectory.appendingPathComponent(".codex/config.toml")
 
-        XCTAssertFalse(FileManager.default.fileExists(atPath: authURL.path))
+        let authData = try Data(contentsOf: authURL)
+        let auth = try XCTUnwrap(try JSONSerialization.jsonObject(with: authData) as? [String: Any])
+        XCTAssertEqual(auth["auth_mode"] as? String, "apikey")
+        XCTAssertEqual(auth["OPENAI_API_KEY"] as? String, "api-token")
+        XCTAssertNil(auth["tokens"])
+        XCTAssertNil(auth["last_refresh"])
 
         let config = try String(contentsOf: configURL, encoding: .utf8)
         XCTAssertTrue(config.contains("model_provider = \"ccmanager\""))
         XCTAssertTrue(config.contains("model = \"gpt-5.4\""))
         XCTAssertTrue(config.contains("[model_providers.ccmanager]"))
         XCTAssertTrue(config.contains("base_url = \"https://api.openai.com/v1\""))
-        XCTAssertTrue(config.contains("experimental_bearer_token = \"api-token\""))
+        XCTAssertTrue(config.contains("wire_api = \"responses\""))
+        XCTAssertTrue(config.contains("requires_openai_auth = true"))
+        XCTAssertFalse(config.contains("experimental_bearer_token"))
     }
 
     func testCodexPreservesUnmanagedConfigWhenSwitchingProvider() throws {
@@ -82,6 +89,12 @@ final class ConfigWriterTests: XCTestCase {
 
         try writer.writeProviderToConfig(provider)
 
+        let authURL = tempDirectory.appendingPathComponent(".codex/auth.json")
+        let authData = try Data(contentsOf: authURL)
+        let auth = try XCTUnwrap(try JSONSerialization.jsonObject(with: authData) as? [String: Any])
+        XCTAssertEqual(auth["auth_mode"] as? String, "apikey")
+        XCTAssertEqual(auth["OPENAI_API_KEY"] as? String, "new-token")
+
         let config = try String(contentsOf: configURL, encoding: .utf8)
         XCTAssertTrue(config.contains("approval_policy = \"on-request\""))
         XCTAssertTrue(config.contains("[features]\nweb_search = true"))
@@ -90,7 +103,7 @@ final class ConfigWriterTests: XCTestCase {
         XCTAssertTrue(config.contains("[profiles.work]\nmodel = \"work-model\"\napproval_policy = \"never\""))
         XCTAssertTrue(config.contains("model = \"gpt-5.4\""))
         XCTAssertTrue(config.contains("model_provider = \"ccmanager\""))
-        XCTAssertTrue(config.contains("experimental_bearer_token = \"new-token\""))
+        XCTAssertFalse(config.contains("experimental_bearer_token"))
         XCTAssertFalse(config.contains("previous-model"))
         XCTAssertFalse(config.contains("previous-provider"))
         XCTAssertFalse(config.contains("old-ccmanager"))
@@ -208,5 +221,55 @@ final class ConfigWriterTests: XCTestCase {
         XCTAssertFalse(config.contains("model_provider ="))
         XCTAssertFalse(config.contains("[model_providers.ccmanager]"))
         XCTAssertFalse(config.contains("old-token"))
+    }
+
+    func testSwitchingBetweenCodexOAuthAndCodexApiKeyCleansAuthJson() throws {
+        let fixedDate = Date(timeIntervalSince1970: 1_777_000_000)
+        let writer = ConfigWriter(home: tempDirectory, currentDate: { fixedDate })
+
+        let oauthProvider = Provider(
+            name: "ChatGPT",
+            type: .codexOAuth,
+            apiKey: nil,
+            baseUrl: "",
+            model: "gpt-5.4",
+            oauthAccountId: "acc-123",
+            oauthAccessToken: "access-token-123",
+            oauthRefreshToken: "refresh-token-123",
+            oauthIdToken: "id-token-123"
+        )
+        try writer.writeProviderToConfig(oauthProvider)
+
+        let authURL = tempDirectory.appendingPathComponent(".codex/auth.json")
+        let configURL = tempDirectory.appendingPathComponent(".codex/config.toml")
+
+        var authData = try Data(contentsOf: authURL)
+        var auth = try XCTUnwrap(try JSONSerialization.jsonObject(with: authData) as? [String: Any])
+        XCTAssertEqual(auth["auth_mode"] as? String, "chatgpt")
+        XCTAssertTrue(auth["OPENAI_API_KEY"] is NSNull)
+        XCTAssertNotNil(auth["tokens"])
+
+        let apiKeyProvider = Provider(
+            name: "ThirdParty",
+            type: .codex,
+            apiKey: "sk-third-party-key",
+            baseUrl: "https://api.thirdparty.com/v1",
+            model: "gpt-5.5"
+        )
+        try writer.writeProviderToConfig(apiKeyProvider)
+
+        authData = try Data(contentsOf: authURL)
+        auth = try XCTUnwrap(try JSONSerialization.jsonObject(with: authData) as? [String: Any])
+        XCTAssertEqual(auth["auth_mode"] as? String, "apikey")
+        XCTAssertEqual(auth["OPENAI_API_KEY"] as? String, "sk-third-party-key")
+        XCTAssertNil(auth["tokens"])
+        XCTAssertNil(auth["last_refresh"])
+
+        let config = try String(contentsOf: configURL, encoding: .utf8)
+        XCTAssertTrue(config.contains("model = \"gpt-5.5\""))
+        XCTAssertTrue(config.contains("model_provider = \"ccmanager\""))
+        XCTAssertTrue(config.contains("[model_providers.ccmanager]"))
+        XCTAssertTrue(config.contains("base_url = \"https://api.thirdparty.com/v1\""))
+        XCTAssertFalse(config.contains("experimental_bearer_token"))
     }
 }
