@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.13.0] - 2026-09-08
+
+### Features
+
+- Store Codex API key in `auth.json` with standard `apikey` authentication mode instead of writing `experimental_bearer_token` to `config.toml`
+
 ## [1.12.13] - 2026-07-15
 
 ### Bug Fixes

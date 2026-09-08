@@ -1,3 +1,3 @@
-### Bug Fixes
+### Features
 
-- Preserve user-defined Codex settings when switching providers by updating only CCManager-managed fields and refusing to overwrite unreadable configuration files
+- Store Codex API key in `auth.json` with standard `apikey` authentication mode instead of writing `experimental_bearer_token` to `config.toml`
