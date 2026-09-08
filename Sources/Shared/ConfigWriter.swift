@@ -65,10 +65,23 @@ final class ConfigWriter {
         try data.write(to: claudeSettings, options: .atomic)
     }
 
-    // MARK: - Codex → ~/.codex/config.toml
+    // MARK: - Codex → ~/.codex/auth.json + config.toml
 
     private func writeCodexConfig(_ provider: Provider) throws {
         try fileManager.createDirectory(at: codexDir, withIntermediateDirectories: true)
+
+        // Write auth.json
+        let authUrl = codexDir.appendingPathComponent("auth.json")
+        var auth: [String: Any] = (try? Data(contentsOf: authUrl))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+
+        auth["auth_mode"] = "apikey"
+        auth["OPENAI_API_KEY"] = provider.apiKey ?? ""
+        auth.removeValue(forKey: "tokens")
+        auth.removeValue(forKey: "last_refresh")
+
+        let authData = try JSONSerialization.data(withJSONObject: auth, options: [.prettyPrinted])
+        try authData.write(to: authUrl, options: .atomic)
 
         let model = provider.model ?? PresetProvider.defaultCodexModel
         let providerKey = "ccmanager"  // fixed provider key
@@ -78,7 +91,6 @@ final class ConfigWriter {
         base_url = "\(provider.baseUrl)"
         wire_api = "responses"
         requires_openai_auth = true
-        experimental_bearer_token = "\(provider.apiKey ?? "")"
         """
 
         try updateCodexConfig(
